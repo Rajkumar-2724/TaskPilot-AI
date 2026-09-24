@@ -1,0 +1,133 @@
+{
+  "target": "time_overrun_months",
+  "label": "Time Overrun (months)",
+  "version": "5.0.0",
+  "generatedAt": "2026-09-21T22:07:53.003426",
+  "featureCols": [
+    "cost_original",
+    "expenditure",
+    "physical_progress",
+    "expenditure_ratio_orig",
+    "progress_minus_expenditure",
+    "original_duration_months",
+    "project_age_months",
+    "months_remaining_original",
+    "months_since_start",
+    "state",
+    "sector",
+    "ministry"
+  ],
+  "rows": 6273,
+  "leakageGuard": {
+    "excludedFeatures": [
+      "cost_revised",
+      "doc_revised",
+      "approval_date_revised",
+      "cost_overrun_amt",
+      "cost_overrun_pct",
+      "time_overrun_months"
+    ],
+    "reason": "revised figures are used only to build targets; including them as features would leak the answer."
+  },
+  "xgbTunedParams": {
+    "colsample_bytree": 0.8347004662655393,
+    "learning_rate": 0.1547882960896207,
+    "max_depth": 6,
+    "n_estimators": 479,
+    "reg_lambda": 0.8279975460676301,
+    "subsample": 0.7888820517112247
+  },
+  "xgbTuneSeconds": 24.9,
+  "cv": {
+    "rf": {
+      "mae": 4.762637518699434,
+      "rmse": 8.118822657596763,
+      "r2": 0.9153566643204035,
+      "mape": 20.476905754065033,
+      "wmape": 20.693767574547103,
+      "splits": "3"
+    },
+    "gb": {
+      "mae": 5.567216640904673,
+      "rmse": 8.714306346488925,
+      "r2": 0.9028206430660998,
+      "mape": 23.37242455251169,
+      "wmape": 24.20285380828592,
+      "splits": "3"
+    },
+    "xgb": {
+      "mae": 4.680040983176543,
+      "rmse": 7.784467240093843,
+      "r2": 0.9221355788323722,
+      "mape": 20.616709055372926,
+      "wmape": 20.35020990460714,
+      "splits": "3"
+    }
+  },
+  "selectedModel": "xgb",
+  "selectionRule": "min RMSE on project-grouped CV (generalization to unseen projects)",
+  "nextMonthHoldout": {
+    "testMonth": "2026-03",
+    "trainRows": 4653,
+    "testRows": 1620,
+    "metrics": {
+      "n": 1620,
+      "mae": 7.662673497868035,
+      "rmse": 12.555970623334971,
+      "r2": 0.7947741648997548,
+      "mape": 32.3463374462847,
+      "wmape": 34.386512649712515
+    }
+  },
+  "modelFile": "models\\paimana\\time_model\\model.pkl",
+  "featureImportance": [
+    {
+      "feature": "ministry",
+      "importance": 0.60645
+    },
+    {
+      "feature": "sector",
+      "importance": 0.18929
+    },
+    {
+      "feature": "months_remaining_original",
+      "importance": 0.1161
+    },
+    {
+      "feature": "state",
+      "importance": 0.06909
+    },
+    {
+      "feature": "months_since_start",
+      "importance": 0.00519
+    },
+    {
+      "feature": "expenditure",
+      "importance": 0.00264
+    },
+    {
+      "feature": "physical_progress",
+      "importance": 0.00246
+    },
+    {
+      "feature": "project_age_months",
+      "importance": 0.00233
+    },
+    {
+      "feature": "original_duration_months",
+      "importance": 0.00196
+    },
+    {
+      "feature": "cost_original",
+      "importance": 0.00177
+    },
+    {
+      "feature": "expenditure_ratio_orig",
+      "importance": 0.00142
+    },
+    {
+      "feature": "progress_minus_expenditure",
+      "importance": 0.0013
+    }
+  ]
+}

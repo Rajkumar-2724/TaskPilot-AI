@@ -1,0 +1,74 @@
+{
+  "generatedAt": "2026-09-21T22:01:02.996181",
+  "source": "PAIMANA Monthly Flash Reports (https://paimana-proj.mospi.gov.in/ReportPage)",
+  "parseLog": [
+    {
+      "file": "2025-26__flash__FRApril2025.pdf",
+      "status": "month-unknown"
+    },
+    {
+      "file": "2025-26__flash__FR_JUNE_2025.pdf",
+      "month": "2025-06",
+      "rows": 0
+    },
+    {
+      "file": "2025-26__flash__FR_May2025.pdf",
+      "month": "2025-05",
+      "rows": 0
+    },
+    {
+      "file": "2025-26__flash__FlashReport_August_2025.pdf",
+      "month": "2025-08",
+      "rows": 800
+    },
+    {
+      "file": "2025-26__flash__FlashReport_December_2025.pdf",
+      "month": "2025-12",
+      "rows": 1345
+    },
+    {
+      "file": "2025-26__flash__FlashReport_February_2026.pdf",
+      "month": "2026-02",
+      "rows": 1897
+    },
+    {
+      "file": "2025-26__flash__FlashReport_January_2026.pdf",
+      "month": "2026-01",
+      "rows": 1605
+    },
+    {
+      "file": "2025-26__flash__FlashReport_July_2025.pdf",
+      "month": "2025-07",
+      "rows": 714
+    },
+    {
+      "file": "2025-26__flash__FlashReport_March_2026.pdf",
+      "month": "2026-03",
+      "rows": 1869
+    },
+    {
+      "file": "2025-26__flash__FlashReport_November_2025.pdf",
+      "month": "2025-11",
+      "rows": 823
+    },
+    {
+      "file": "2025-26__flash__FlashReport_October_2025.pdf",
+      "month": "2025-10",
+      "rows": 798
+    },
+    {
+      "file": "2025-26__flash__FlashReport_September_2025.pdf",
+      "month": "2025-09",
+      "rows": 772
+    }
+  ],
+  "totalRecords": 10623,
+  "rowsWithCostTarget": 10623,
+  "rowsWithTimeTarget": 6668,
+  "notes": [
+    "Only reports with the new PAIMANA 'All Ongoing Projects' table are parsed (July 2025 onward).",
+    "Rows are project-by-month snapshots (longitudinal).",
+    "Targets use the latest sanctioned/estimated (revised) figures reported in the same month.",
+    "Features never include revised_cost / revised_doc (would leak targets)."
+  ]
+}

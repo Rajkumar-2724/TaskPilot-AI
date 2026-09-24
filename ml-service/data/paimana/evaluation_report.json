@@ -1,0 +1,144 @@
+{
+  "cost_overrun_pct": {
+    "label": "Cost Overrun (%)",
+    "model": "rf",
+    "version": "5.0.0",
+    "cv": {
+      "rf": {
+        "mae": 10.341882620457065,
+        "rmse": 24.175195256319075,
+        "r2": 0.6797920826864754,
+        "mape": 62.82270701224582,
+        "wmape": 68.58216616674275,
+        "splits": "3"
+      },
+      "gb": {
+        "mae": 12.370364212287493,
+        "rmse": 26.141816128237632,
+        "r2": 0.6256769514445973,
+        "mape": 76.11430581029856,
+        "wmape": 82.04156028379826,
+        "splits": "3"
+      },
+      "xgb": {
+        "mae": 11.200882586641915,
+        "rmse": 25.10117169377629,
+        "r2": 0.6548206475813897,
+        "mape": 67.220071271941,
+        "wmape": 74.35309523418039,
+        "splits": "3"
+      }
+    },
+    "selectedBy": "min RMSE (project-held-out CV)",
+    "nextMonthHoldout": {
+      "testMonth": "2026-03",
+      "trainRows": 8186,
+      "testRows": 1852,
+      "metrics": {
+        "n": 1852,
+        "mae": 5.597393104137882,
+        "rmse": 12.248573389675977,
+        "r2": 0.8884277817410933,
+        "mape": 37.90709644495946,
+        "wmape": 39.448946511247065
+      }
+    },
+    "featureCols": [
+      "cost_original",
+      "expenditure",
+      "physical_progress",
+      "expenditure_ratio_orig",
+      "progress_minus_expenditure",
+      "original_duration_months",
+      "project_age_months",
+      "months_remaining_original",
+      "months_since_start",
+      "state",
+      "sector",
+      "ministry"
+    ],
+    "limits": [
+      -100.0,
+      500.0
+    ],
+    "trainedParams": {
+      "colsample_bytree": 0.8469926038510867,
+      "learning_rate": 0.10174797407324213,
+      "max_depth": 7,
+      "n_estimators": 335,
+      "reg_lambda": 0.06918727512424727,
+      "subsample": 0.8574323980775167
+    }
+  },
+  "time_overrun_months": {
+    "label": "Time Overrun (months)",
+    "model": "xgb",
+    "version": "5.0.0",
+    "cv": {
+      "rf": {
+        "mae": 4.762637518699434,
+        "rmse": 8.118822657596763,
+        "r2": 0.9153566643204035,
+        "mape": 20.476905754065033,
+        "wmape": 20.693767574547103,
+        "splits": "3"
+      },
+      "gb": {
+        "mae": 5.567216640904673,
+        "rmse": 8.714306346488925,
+        "r2": 0.9028206430660998,
+        "mape": 23.37242455251169,
+        "wmape": 24.20285380828592,
+        "splits": "3"
+      },
+      "xgb": {
+        "mae": 4.680040983176543,
+        "rmse": 7.784467240093843,
+        "r2": 0.9221355788323722,
+        "mape": 20.616709055372926,
+        "wmape": 20.35020990460714,
+        "splits": "3"
+      }
+    },
+    "selectedBy": "min RMSE (project-held-out CV)",
+    "nextMonthHoldout": {
+      "testMonth": "2026-03",
+      "trainRows": 4653,
+      "testRows": 1620,
+      "metrics": {
+        "n": 1620,
+        "mae": 7.662673497868035,
+        "rmse": 12.555970623334971,
+        "r2": 0.7947741648997548,
+        "mape": 32.3463374462847,
+        "wmape": 34.386512649712515
+      }
+    },
+    "featureCols": [
+      "cost_original",
+      "expenditure",
+      "physical_progress",
+      "expenditure_ratio_orig",
+      "progress_minus_expenditure",
+      "original_duration_months",
+      "project_age_months",
+      "months_remaining_original",
+      "months_since_start",
+      "state",
+      "sector",
+      "ministry"
+    ],
+    "limits": [
+      -120.0,
+      240.0
+    ],
+    "trainedParams": {
+      "colsample_bytree": 0.8347004662655393,
+      "learning_rate": 0.1547882960896207,
+      "max_depth": 6,
+      "n_estimators": 479,
+      "reg_lambda": 0.8279975460676301,
+      "subsample": 0.7888820517112247
+    }
+  }
+}

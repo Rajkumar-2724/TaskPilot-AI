@@ -1,0 +1,51 @@
+{
+  "updatedAt": "2026-09-24T09:55:22.014300",
+  "metrics": [
+    {
+      "modelName": "Cost Overrun Prediction",
+      "modelVersion": "4.0.0",
+      "metricName": "MAE",
+      "metricValue": 10.515,
+      "baselineValue": 23.589,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "ml",
+      "modelType": "regression",
+      "trainingDate": "2026-09-24T09:55:22.012975"
+    },
+    {
+      "modelName": "Cost Overrun Prediction",
+      "modelVersion": "4.0.0",
+      "metricName": "R2",
+      "metricValue": 0.69,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "ml",
+      "modelType": "regression",
+      "trainingDate": "2026-09-24T09:55:22.012995"
+    },
+    {
+      "modelName": "Time Overrun Prediction",
+      "modelVersion": "4.0.0",
+      "metricName": "MAE",
+      "metricValue": 7.305,
+      "baselineValue": 11.485,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "ml",
+      "modelType": "regression",
+      "trainingDate": "2026-09-24T09:55:22.013005"
+    },
+    {
+      "modelName": "Time Overrun Prediction",
+      "modelVersion": "4.0.0",
+      "metricName": "R2",
+      "metricValue": 0.5374,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "ml",
+      "modelType": "regression",
+      "trainingDate": "2026-09-24T09:55:22.013010"
+    }
+  ]
+}

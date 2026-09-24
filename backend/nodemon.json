@@ -1,0 +1,1 @@
+{"watch":["server.js","routes","controllers","models","services","config","utils","middleware"],"ext":"js,css,html,json","ignore":["node_modules","uploads","dist"]}

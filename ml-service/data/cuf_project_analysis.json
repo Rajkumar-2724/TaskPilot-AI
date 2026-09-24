@@ -1,0 +1,497 @@
+{
+  "status": "available",
+  "modelA": {
+    "label": "CUF fields only",
+    "features": [
+      "originalCost",
+      "revisedCost",
+      "expenditure",
+      "plannedDuration",
+      "actualDuration",
+      "physicalProgress",
+      "financialProgress",
+      "totalMilestones",
+      "completedMilestones",
+      "delayedMilestones",
+      "resourceAvailability",
+      "contractChanges",
+      "contractChangeImpact"
+    ]
+  },
+  "modelB": {
+    "label": "CUF + candidate variables",
+    "features": [
+      "originalCost",
+      "revisedCost",
+      "expenditure",
+      "plannedDuration",
+      "actualDuration",
+      "physicalProgress",
+      "financialProgress",
+      "totalMilestones",
+      "completedMilestones",
+      "delayedMilestones",
+      "resourceAvailability",
+      "contractChanges",
+      "contractChangeImpact",
+      "contractorPerformance",
+      "procurementDelay",
+      "landAcquisitionDelay",
+      "environmentalClearanceDelay",
+      "materialPriceVariation",
+      "laborAvailability",
+      "weatherDisruptionDays",
+      "fundingReleaseDelay",
+      "utilityShifting",
+      "litigationDisputes"
+    ]
+  },
+  "candidateVariables": [
+    "contractorPerformance",
+    "procurementDelay",
+    "landAcquisitionDelay",
+    "environmentalClearanceDelay",
+    "materialPriceVariation",
+    "laborAvailability",
+    "weatherDisruptionDays",
+    "fundingReleaseDelay",
+    "utilityShifting",
+    "litigationDisputes"
+  ],
+  "metrics": [
+    {
+      "modelName": "Cost Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 21.466,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvement": null,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Cost Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 21.826,
+      "improvementVsA": 0.36,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvementVsA": 0.36,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Cost Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 25.676,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvement": null,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Cost Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 26.875,
+      "improvementVsA": 1.199,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvementVsA": 1.199,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Cost Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": -0.3665,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvement": null,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Cost Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": -0.4971,
+      "improvementVsA": -0.1306,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvementVsA": -0.1306,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Time Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 11.997,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvement": null,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Time Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 12.17,
+      "improvementVsA": 0.173,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvementVsA": 0.173,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Time Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 13.301,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvement": null,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Time Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 13.057,
+      "improvementVsA": -0.244,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvementVsA": -0.244,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Time Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": -0.1106,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvement": null,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    },
+    {
+      "modelName": "Time Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": -0.0702,
+      "improvementVsA": 0.0404,
+      "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+      "datasetSize": 27,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:41:36.501293",
+      "extra": {
+        "improvementVsA": 0.0404,
+        "cohortSize": 27,
+        "cohortFilter": {
+          "sector": "Transport",
+          "state": "Meghalaya",
+          "relaxed": true
+        }
+      }
+    }
+  ],
+  "featureImportance": {
+    "originalCost": 0.0046,
+    "revisedCost": 0.0042,
+    "expenditure": 0.0784,
+    "plannedDuration": 0.005,
+    "actualDuration": 0.0,
+    "physicalProgress": 0.002,
+    "financialProgress": 0.0005,
+    "totalMilestones": 0.0,
+    "completedMilestones": 0.0001,
+    "delayedMilestones": 0.0006,
+    "resourceAvailability": 0.0508,
+    "contractChanges": 0.0,
+    "contractChangeImpact": 0.0258,
+    "contractorPerformance": 0.0094,
+    "procurementDelay": 0.0,
+    "landAcquisitionDelay": 0.3202,
+    "environmentalClearanceDelay": 0.3664,
+    "materialPriceVariation": 0.0037,
+    "laborAvailability": 0.0006,
+    "weatherDisruptionDays": 0.0377,
+    "fundingReleaseDelay": 0.0899,
+    "utilityShifting": 0.0,
+    "litigationDisputes": 0.0
+  },
+  "cohortSize": 27,
+  "cohortFilter": {
+    "sector": "Transport",
+    "state": "Meghalaya",
+    "projectType": "InfrastructureProject",
+    "costRange": {
+      "min": 39778.5,
+      "max": 163588.5
+    },
+    "durationRange": {
+      "min": 22.5,
+      "max": 67.5
+    },
+    "relaxed": true
+  },
+  "datasetLabel": "Cohort: Transport \u00b7 Meghalaya",
+  "samples": 27,
+  "selectedProject": {
+    "_id": "6aa913e265408d01f2c2c75a",
+    "name": "Upgradation of Metro Phase at Meghalaya - Transport (20)",
+    "sector": "Transport",
+    "state": "Meghalaya",
+    "projectType": "InfrastructureProject",
+    "originalCost": 79557,
+    "revisedCost": 109059,
+    "plannedDuration": 45,
+    "completedAt": null,
+    "predictedCostOverrunPct": null,
+    "predictedTimeOverrunMonths": null,
+    "paimanaPredictionSource": "",
+    "projectCode": "PAIMANA-RAI-0020",
+    "description": "Railways project under Ministry of Railways in Meghalaya. Original cost: \u20b979557 Cr, Revised cost: \u20b9109059 Cr. Physical progress: 15%.",
+    "ministry": "Ministry of Railways",
+    "district": "",
+    "implementationAgency": "National Buildings Construction Corporation",
+    "members": [
+      {
+        "_id": "6a9a4c634a01d4a91be1fe33",
+        "name": "Raj",
+        "email": "rkrajubhai726@gmail.com",
+        "profilePicture": ""
+      }
+    ],
+    "expenditure": 14178,
+    "budgetSanctioned": 79557,
+    "budgetReleased": 78102,
+    "actualDuration": 45,
+    "plannedStartDate": "2021-02-25T18:30:00.000Z",
+    "plannedEndDate": "2024-11-25T18:30:00.000Z",
+    "physicalProgress": 15,
+    "financialProgress": 13,
+    "milestoneCompletion": 0,
+    "totalMilestones": 5,
+    "completedMilestones": 0,
+    "delayedMilestones": 0,
+    "resourceAvailability": 88,
+    "status": "Planning",
+    "milestones": [
+      {
+        "title": "Milestone 1: Phase 1",
+        "description": "",
+        "plannedStartDate": "2021-02-25T18:30:00.000Z",
+        "plannedEndDate": "2021-11-25T18:30:00.000Z",
+        "status": "In Progress",
+        "completionPercentage": 33,
+        "physicalProgress": 73,
+        "financialProgress": 20,
+        "delayedDays": 0,
+        "costAtMilestone": 0,
+        "_id": "6aa913e265408d01f2c2c75b",
+        "createdAt": "2026-09-15T09:46:10.124Z",
+        "updatedAt": "2026-09-15T09:46:10.124Z"
+      },
+      {
+        "title": "Milestone 2: Phase 2",
+        "description": "",
+        "plannedStartDate": "2021-11-25T18:30:00.000Z",
+        "plannedEndDate": "2022-08-25T18:30:00.000Z",
+        "status": "Not Started",
+        "completionPercentage": 0,
+        "physicalProgress": 0,
+        "financialProgress": 0,
+        "delayedDays": 0,
+        "costAtMilestone": 0,
+        "_id": "6aa913e265408d01f2c2c75c",
+        "createdAt": "2026-09-15T09:46:10.124Z",
+        "updatedAt": "2026-09-15T09:46:10.124Z"
+      },
+      {
+        "title": "Milestone 3: Phase 3",
+        "description": "",
+        "plannedStartDate": "2022-08-25T18:30:00.000Z",
+        "plannedEndDate": "2023-05-25T18:30:00.000Z",
+        "status": "Not Started",
+        "completionPercentage": 0,
+        "physicalProgress": 0,
+        "financialProgress": 0,
+        "delayedDays": 0,
+        "costAtMilestone": 0,
+        "_id": "6aa913e265408d01f2c2c75d",
+        "createdAt": "2026-09-15T09:46:10.124Z",
+        "updatedAt": "2026-09-15T09:46:10.124Z"
+      },
+      {
+        "title": "Milestone 4: Phase 4",
+        "description": "",
+        "plannedStartDate": "2023-05-25T18:30:00.000Z",
+        "plannedEndDate": "2024-02-25T18:30:00.000Z",
+        "status": "Not Started",
+        "completionPercentage": 0,
+        "physicalProgress": 0,
+        "financialProgress": 0,
+        "delayedDays": 0,
+        "costAtMilestone": 0,
+        "_id": "6aa913e265408d01f2c2c75e",
+        "createdAt": "2026-09-15T09:46:10.124Z",
+        "updatedAt": "2026-09-15T09:46:10.124Z"
+      },
+      {
+        "title": "Milestone 5: Phase 5",
+        "description": "",
+        "plannedStartDate": "2024-02-25T18:30:00.000Z",
+        "plannedEndDate": "2024-11-25T18:30:00.000Z",
+        "status": "Not Started",
+        "completionPercentage": 0,
+        "physicalProgress": 0,
+        "financialProgress": 0,
+        "delayedDays": 0,
+        "costAtMilestone": 0,
+        "_id": "6aa913e265408d01f2c2c75f",
+        "createdAt": "2026-09-15T09:46:10.124Z",
+        "updatedAt": "2026-09-15T09:46:10.124Z"
+      }
+    ],
+    "riskScore": 35,
+    "riskCategory": "Moderate",
+    "costOverrunProbability": 20.8,
+    "predictedFinalCost": 120411,
+    "timeOverrunProbability": 13,
+    "predictedDelayDays": 0,
+    "costEscalationDrivers": [
+      "Revised cost exceeds original by more than 10%"
+    ],
+    "isActive": true,
+    "tags": [
+      "Railways",
+      "Meghalaya",
+      "Ministry of Railways"
+    ],
+    "contractChanges": [],
+    "progressHistory": [],
+    "__v": 1,
+    "createdAt": "2026-09-15T09:46:10.124Z",
+    "updatedAt": "2026-09-17T08:48:23.367Z",
+    "projectManager": {
+      "_id": "6a9a4c634a01d4a91be1fe33",
+      "name": "Raj",
+      "email": "rkrajubhai726@gmail.com",
+      "profilePicture": ""
+    },
+    "lastRiskAssessmentDate": "2026-09-17T08:48:23.365Z",
+    "taskCount": 0
+  }
+}

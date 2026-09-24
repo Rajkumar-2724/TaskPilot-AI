@@ -1,0 +1,264 @@
+{
+  "status": "available",
+  "modelA": {
+    "label": "CUF fields only",
+    "features": [
+      "originalCost",
+      "revisedCost",
+      "expenditure",
+      "plannedDuration",
+      "actualDuration",
+      "physicalProgress",
+      "financialProgress",
+      "totalMilestones",
+      "completedMilestones",
+      "delayedMilestones",
+      "resourceAvailability",
+      "contractChanges",
+      "contractChangeImpact"
+    ]
+  },
+  "modelB": {
+    "label": "CUF + candidate variables",
+    "features": [
+      "originalCost",
+      "revisedCost",
+      "expenditure",
+      "plannedDuration",
+      "actualDuration",
+      "physicalProgress",
+      "financialProgress",
+      "totalMilestones",
+      "completedMilestones",
+      "delayedMilestones",
+      "resourceAvailability",
+      "contractChanges",
+      "contractChangeImpact",
+      "contractorPerformance",
+      "procurementDelay",
+      "landAcquisitionDelay",
+      "environmentalClearanceDelay",
+      "materialPriceVariation",
+      "laborAvailability",
+      "weatherDisruptionDays",
+      "fundingReleaseDelay",
+      "utilityShifting",
+      "litigationDisputes"
+    ]
+  },
+  "candidateVariables": [
+    "contractorPerformance",
+    "procurementDelay",
+    "landAcquisitionDelay",
+    "environmentalClearanceDelay",
+    "materialPriceVariation",
+    "laborAvailability",
+    "weatherDisruptionDays",
+    "fundingReleaseDelay",
+    "utilityShifting",
+    "litigationDisputes"
+  ],
+  "metrics": [
+    {
+      "modelName": "CUF Cost Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 9.468,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvement": null
+      }
+    },
+    {
+      "modelName": "CUF Cost Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 10.595,
+      "improvementVsA": 1.127,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvementVsA": 1.127
+      }
+    },
+    {
+      "modelName": "CUF Cost Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 13.227,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvement": null
+      }
+    },
+    {
+      "modelName": "CUF Cost Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 14.436,
+      "improvementVsA": 1.209,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvementVsA": 1.209
+      }
+    },
+    {
+      "modelName": "CUF Cost Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": 0.7412,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvement": null
+      }
+    },
+    {
+      "modelName": "CUF Cost Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": 0.6917,
+      "improvementVsA": -0.0495,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvementVsA": -0.0495
+      }
+    },
+    {
+      "modelName": "CUF Time Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 6.861,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvement": null
+      }
+    },
+    {
+      "modelName": "CUF Time Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "MAE",
+      "metricValue": 6.961,
+      "improvementVsA": 0.1,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvementVsA": 0.1
+      }
+    },
+    {
+      "modelName": "CUF Time Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 8.31,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvement": null
+      }
+    },
+    {
+      "modelName": "CUF Time Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "RMSE",
+      "metricValue": 8.619,
+      "improvementVsA": 0.309,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvementVsA": 0.309
+      }
+    },
+    {
+      "modelName": "CUF Time Overrun (Model A)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": 0.6377,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "cuf-only",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvement": null
+      }
+    },
+    {
+      "modelName": "CUF Time Overrun + Candidate Variables (Model B)",
+      "modelVersion": "1.0.0",
+      "metricName": "R2",
+      "metricValue": 0.6103,
+      "improvementVsA": -0.0274,
+      "datasetLabel": "Demo/Synthetic Dataset",
+      "datasetSize": 240,
+      "comparisonGroup": "extended",
+      "modelType": "regression",
+      "trainingDate": "2026-09-23T10:00:23.516480",
+      "extra": {
+        "improvementVsA": -0.0274
+      }
+    }
+  ],
+  "featureImportance": {
+    "originalCost": 0.1119,
+    "revisedCost": 0.0153,
+    "expenditure": 0.4871,
+    "plannedDuration": 0.0055,
+    "actualDuration": 0.0047,
+    "physicalProgress": 0.0705,
+    "financialProgress": 0.0193,
+    "totalMilestones": 0.0097,
+    "completedMilestones": 0.0774,
+    "delayedMilestones": 0.007,
+    "resourceAvailability": 0.0016,
+    "contractChanges": 0.0004,
+    "contractChangeImpact": 0.0076,
+    "contractorPerformance": 0.005,
+    "procurementDelay": 0.012,
+    "landAcquisitionDelay": 0.016,
+    "environmentalClearanceDelay": 0.0127,
+    "materialPriceVariation": 0.0092,
+    "laborAvailability": 0.0235,
+    "weatherDisruptionDays": 0.0192,
+    "fundingReleaseDelay": 0.0749,
+    "utilityShifting": 0.0021,
+    "litigationDisputes": 0.0075
+  },
+  "datasetLabel": "Demo/Synthetic Dataset",
+  "samples": 240
+}

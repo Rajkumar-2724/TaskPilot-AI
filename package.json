@@ -1,0 +1,9 @@
+{
+  "name": "taskpilot-ai",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run build --prefix frontend",
+    "start": "npm start --prefix backend"
+  }
+}

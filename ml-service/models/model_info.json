@@ -1,0 +1,130 @@
+{
+  "version": "2026.09.21.2036",
+  "trainingDate": "2026-09-21T20:36:39.774028",
+  "datasetLabel": "Demo / Synthetic Dataset (not real PAIMANA/OCMS data)",
+  "datasetSize": 240,
+  "trainSetSize": 180,
+  "testSetSize": 60,
+  "featuresUsed": [
+    "originalCost",
+    "revisedCost",
+    "expenditure",
+    "plannedDuration",
+    "actualDuration",
+    "physicalProgress",
+    "financialProgress",
+    "totalMilestones",
+    "completedMilestones",
+    "delayedMilestones",
+    "resourceAvailability",
+    "contractChanges",
+    "contractChangeImpact"
+  ],
+  "models": {
+    "costOverrunRegression": "XGBoostRegressor",
+    "costOverrunClassification": "RandomForestClassifier",
+    "timeOverrunRegression": "XGBoostRegressor",
+    "timeOverrunClassification": "RandomForestClassifier",
+    "riskClassification": "RandomForestClassifier",
+    "statisticalBaselines": [
+      "LinearRegression",
+      "LogisticRegression"
+    ]
+  },
+  "validationMetrics": {
+    "generatedAt": "2026-09-21T20:36:39.774073",
+    "testSetSize": 60,
+    "trainSetSize": 180,
+    "costOverrunRegression": {
+      "statistical": {
+        "model": "LinearRegression",
+        "mae": 13.538,
+        "rmse": 16.217,
+        "r2": 0.6109
+      },
+      "ml": {
+        "model": "XGBoostRegressor",
+        "mae": 10.515,
+        "rmse": 14.477,
+        "r2": 0.69,
+        "cvR2Mean": 0.6713,
+        "cvR2Std": 0.0259
+      },
+      "bestModel": "XGBoostRegressor"
+    },
+    "costOverrunClassification": {
+      "statistical": {
+        "model": "LogisticRegression",
+        "accuracy": 0.8833,
+        "precision": 0.9111,
+        "recall": 0.9318,
+        "f1Score": 0.9213,
+        "rocAuc": 0.8409
+      },
+      "ml": {
+        "model": "RandomForestClassifier",
+        "accuracy": 0.7333,
+        "precision": 0.7593,
+        "recall": 0.9318,
+        "f1Score": 0.8367,
+        "rocAuc": 0.5597
+      },
+      "bestModel": "LogisticRegression"
+    },
+    "timeOverrunRegression": {
+      "statistical": {
+        "model": "LinearRegression",
+        "mae": 11.518,
+        "rmse": 13.926,
+        "r2": -0.0174
+      },
+      "ml": {
+        "model": "XGBoostRegressor",
+        "mae": 7.305,
+        "rmse": 9.39,
+        "r2": 0.5374,
+        "cvR2Mean": 0.6464,
+        "cvR2Std": 0.128
+      },
+      "bestModel": "XGBoostRegressor"
+    },
+    "timeOverrunClassification": {
+      "statistical": {
+        "model": "LogisticRegression",
+        "accuracy": 0.7833,
+        "precision": 0.8333,
+        "recall": 0.8889,
+        "f1Score": 0.8602,
+        "rocAuc": 0.6778
+      },
+      "ml": {
+        "model": "RandomForestClassifier",
+        "accuracy": 0.85,
+        "precision": 0.8913,
+        "recall": 0.9111,
+        "f1Score": 0.9011,
+        "rocAuc": 0.7889
+      },
+      "bestModel": "RandomForestClassifier"
+    },
+    "riskClassification": {
+      "statistical": {
+        "model": "LogisticRegression",
+        "accuracy": 0.8833,
+        "precision": 0.8621,
+        "recall": 0.8929,
+        "f1Score": 0.8772,
+        "rocAuc": 0.8839
+      },
+      "ml": {
+        "model": "RandomForestClassifier",
+        "accuracy": 0.8333,
+        "precision": 0.7812,
+        "recall": 0.8929,
+        "f1Score": 0.8333,
+        "rocAuc": 0.8371
+      },
+      "bestModel": "LogisticRegression"
+    }
+  }
+}
