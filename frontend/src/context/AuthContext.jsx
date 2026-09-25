@@ -38,19 +38,6 @@ export const AuthProvider = ({ children }) => {
     return data.user;
   };
 
-  const requestOtp = async (email, password) => {
-    const { data } = await api.post("/auth/send-otp", { email, password });
-    return data;
-  };
-
-  const verifyOtp = async (email, otp) => {
-    const { data } = await api.post("/auth/verify-otp", { email, otp });
-    localStorage.setItem("tp_token", data.token);
-    localStorage.setItem("tp_user", JSON.stringify(data.user));
-    setUser(data.user);
-    return data.user;
-  };
-
   const register = async (payload) => {
     const { data } = await api.post("/auth/register", payload);
     localStorage.setItem("tp_token", data.token);
@@ -71,7 +58,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, requestOtp, verifyOtp, register, logout, updateUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
