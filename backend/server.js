@@ -95,6 +95,10 @@ app.get("/api/health", (req, res) => {
   res.json({ success: true, message: "TaskPilot AI – Predictive Infrastructure Monitoring System", time: new Date().toISOString() });
 });
 
+app.get("/", (req, res) => {
+  res.json({ success: true, message: "TaskPilot AI Backend is running!" });
+});
+
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/projects", projectRoutes);
 app.use("/api/tasks", taskRoutes);
