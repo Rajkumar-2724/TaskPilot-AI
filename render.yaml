@@ -20,6 +20,8 @@ services:
         value: 7d
       - key: CLIENT_URL
         sync: false
+      - key: ML_SERVICE_URL
+        value: https://taskpilot-ai-ml-service.onrender.com
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL

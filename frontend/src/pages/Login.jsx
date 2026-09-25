@@ -6,10 +6,12 @@ import { motion } from "framer-motion";
 import AnimatedBackground3D from "../components/AnimatedBackground3D.jsx";
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, resendVerification } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
+  const [unverified, setUnverified] = useState(false);
+  const [resending, setResending] = useState(false);
   const passwordRef = useRef(null);
 
   const handleLogin = async (e) => {
@@ -20,11 +22,27 @@ const Login = () => {
       toast.success("Welcome back!");
       navigate("/app/dashboard");
     } catch (err) {
+      const needsVerification = err.response?.data?.code === "EMAIL_NOT_VERIFIED";
+      setUnverified(needsVerification);
       toast.error(err.response?.data?.message || "Invalid email or password");
-      setForm((f) => ({ ...f, password: "" }));
-      passwordRef.current?.focus();
+      if (!needsVerification) {
+        setForm((f) => ({ ...f, password: "" }));
+        passwordRef.current?.focus();
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResending(true);
+    try {
+      const data = await resendVerification(form.email);
+      toast.success(data.message || "Verification code sent");
+    } catch (err) {
+      toast.error(err.response?.data?.message || "Could not send a new code");
+    } finally {
+      setResending(false);
     }
   };
 
@@ -77,6 +95,21 @@ const Login = () => {
           </motion.div>
 
           <motion.form onSubmit={handleLogin} variants={containerVariants} initial="hidden" animate="visible">
+            {unverified && (
+              <motion.div className="alert alert-warning py-2 small" variants={itemVariants}>
+                <i className="bi bi-envelope-exclamation me-1" />
+                <div>Your email address is not verified yet.</div>
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm p-0 mt-1"
+                  style={{ color: '#38BDF8', textDecoration: 'none' }}
+                  onClick={handleResend}
+                  disabled={resending}
+                >
+                  {resending ? "Sending..." : "Resend verification code"}
+                </button>
+              </motion.div>
+            )}
             <motion.div className="mb-3" variants={itemVariants}>
               <label className="form-label">Email</label>
               <motion.input

@@ -21,6 +21,23 @@ if (isConfigured) {
   console.log(`[Email] SMTP configured for ${process.env.SMTP_HOST}:${Number(process.env.SMTP_PORT) || 587}`);
 }
 
+export const isEmailConfigured = Boolean(isConfigured);
+
+export const verifyEmailConfig = async () => {
+  if (!transporter) {
+    console.log("[Email] SMTP is not configured. Set SMTP_HOST, SMTP_USER and SMTP_PASS to enable email delivery.");
+    return { ok: false, reason: "SMTP not configured" };
+  }
+  try {
+    await transporter.verify();
+    console.log(`[Email] SMTP connection verified for ${process.env.SMTP_HOST}`);
+    return { ok: true };
+  } catch (err) {
+    console.error(`[Email] SMTP verification failed: ${err.message}`);
+    return { ok: false, reason: err.message };
+  }
+};
+
 export const sendEmail = async ({ to, subject, html }) => {
   if (!transporter) {
     console.log(`[Email:disabled] Would send to ${to} | Subject: ${subject}`);
@@ -43,6 +60,28 @@ export const sendEmail = async ({ to, subject, html }) => {
 
 export const emailTemplates = {
   welcome: (name) => `<h2>Welcome to TaskPilot AI, ${name}!</h2><p>Your account has been created successfully.</p>`,
+  emailVerification: (name, code, expiresInMin) =>
+    `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:520px;margin:0 auto;color:#1E293B;">
+      <div style="background:linear-gradient(135deg,#6366F1,#38BDF8);padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+        <h2 style="color:#fff;margin:0;font-size:20px;">Verify your email</h2>
+      </div>
+      <div style="padding:24px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
+        <p style="font-size:15px;line-height:1.6;">Hi <b>${name}</b>, confirm your email address to activate your TaskPilot AI account.</p>
+        <div style="display:inline-block;font-size:34px;font-weight:700;letter-spacing:10px;color:#6366F1;background:#EEF2FF;padding:14px 22px;border-radius:12px;margin:12px 0;">${code}</div>
+        <p style="font-size:14px;color:#64748B;">This code expires in <b>${expiresInMin} minutes</b>.</p>
+        <p style="font-size:13px;color:#94A3B8;">If you did not create a TaskPilot AI account, you can safely ignore this email.</p>
+      </div>
+    </div>`,
+  emailVerified: (name) =>
+    `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:520px;margin:0 auto;color:#1E293B;">
+      <div style="background:linear-gradient(135deg,#22C55E,#38BDF8);padding:24px;border-radius:12px 12px 0 0;text-align:center;">
+        <h2 style="color:#fff;margin:0;font-size:20px;">Email verified</h2>
+      </div>
+      <div style="padding:24px;border:1px solid #E2E8F0;border-top:none;border-radius:0 0 12px 12px;text-align:center;">
+        <p style="font-size:15px;line-height:1.6;">Hi <b>${name}</b>, your email is verified. You can now sign in with your email and password.</p>
+        <p style="font-size:13px;color:#94A3B8;">Best regards,<br/>TaskPilot AI Team</p>
+      </div>
+    </div>`,
   loginOtp: (name, otp, expiresInMin) =>
     `<div style="font-family:'Segoe UI',Arial,sans-serif;max-width:520px;margin:0 auto;color:#1E293B;">
       <div style="background:linear-gradient(135deg,#6366F1,#38BDF8);padding:24px;border-radius:12px 12px 0 0;text-align:center;">

@@ -6,8 +6,8 @@ import { sendEmail, emailTemplates } from "../services/emailService.js";
 import { cloudinaryEnabled } from "../config/cloudinary.js";
 import cloudinary from "../config/cloudinary.js";
 
-const OTP_EXPIRY_MINUTES = 5;
-const MAX_OTP_ATTEMPTS = 5;
+const VERIFICATION_EXPIRY_MINUTES = 30;
+const MAX_VERIFICATION_ATTEMPTS = 5;
 
 const generateOtp = () => crypto.randomInt(100000, 1000000).toString();
 
@@ -24,6 +24,24 @@ const verifyOtpHash = (otp, stored) => {
   const candidate = crypto.scryptSync(otp, salt, 64);
   const expected = Buffer.from(hash, "hex");
   return candidate.length === expected.length && crypto.timingSafeEqual(candidate, expected);
+};
+
+const issueVerificationCode = async (user) => {
+  const code = generateOtp();
+  user.verificationCodeHash = hashOtp(code);
+  user.verificationExpiresAt = new Date(Date.now() + VERIFICATION_EXPIRY_MINUTES * 60 * 1000);
+  user.verificationAttempts = 0;
+  await user.save();
+  return code;
+};
+
+const deliverVerificationCode = async (user) => {
+  const code = await issueVerificationCode(user);
+  return sendEmail({
+    to: user.email,
+    subject: "Verify your TaskPilot AI email address",
+    html: emailTemplates.emailVerification(user.name, code, VERIFICATION_EXPIRY_MINUTES),
+  });
 };
 
 // @desc Register new user
@@ -51,18 +69,116 @@ export const register = asyncHandler(async (req, res) => {
     email,
     password,
     role: "Member",
+    isEmailVerified: false,
   });
 
-  sendEmail({
-    to: user.email,
-    subject: "Welcome to TaskPilot AI",
-    html: emailTemplates.welcome(user.name),
-  }).catch(() => {});
+  const emailResult = await deliverVerificationCode(user);
 
   res.status(201).json({
     success: true,
+    requiresEmailVerification: true,
+    email: user.email,
+    emailDelivered: emailResult.sent,
+    message: emailResult.sent
+      ? `Verification code sent to ${user.email}`
+      : "Account created, but the verification email could not be sent. Request a new code once email delivery is configured.",
+  });
+});
+
+// @desc Verify email address and activate account
+// @route POST /api/auth/verify-email
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { email, code } = req.body;
+  if (!email || !code) {
+    res.status(400);
+    throw new Error("Email and verification code are required");
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase() })
+    .select("+verificationCodeHash +verificationExpiresAt +verificationAttempts");
+  if (!user) {
+    res.status(404);
+    throw new Error("No account found for this email");
+  }
+
+  if (user.isEmailVerified) {
+    res.json({
+      success: true,
+      alreadyVerified: true,
+      message: "Email is already verified",
+      user: user.toSafeObject(),
+      token: generateToken(user._id),
+    });
+    return;
+  }
+
+  if (!user.verificationCodeHash || !user.verificationExpiresAt || user.verificationExpiresAt < new Date()) {
+    res.status(400);
+    throw new Error("Verification code expired. Request a new one.");
+  }
+  if (user.verificationAttempts >= MAX_VERIFICATION_ATTEMPTS) {
+    res.status(429);
+    throw new Error("Too many incorrect attempts. Request a new code.");
+  }
+
+  if (!verifyOtpHash(code, user.verificationCodeHash)) {
+    user.verificationAttempts += 1;
+    await user.save();
+    res.status(401);
+    throw new Error(`Invalid code. ${MAX_VERIFICATION_ATTEMPTS - user.verificationAttempts} attempt(s) remaining.`);
+  }
+
+  user.isEmailVerified = true;
+  user.verificationCodeHash = null;
+  user.verificationExpiresAt = null;
+  user.verificationAttempts = 0;
+  await user.save();
+
+  sendEmail({
+    to: user.email,
+    subject: "Your TaskPilot AI email is verified",
+    html: emailTemplates.emailVerified(user.name),
+  }).catch(() => {});
+
+  res.json({
+    success: true,
+    message: "Email verified successfully",
     user: user.toSafeObject(),
     token: generateToken(user._id),
+  });
+});
+
+// @desc Resend the email verification code
+// @route POST /api/auth/resend-verification
+export const resendVerification = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    res.status(400);
+    throw new Error("Email is required");
+  }
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+  if (!user) {
+    res.status(404);
+    throw new Error("No account found for this email");
+  }
+  if (user.isEmailVerified) {
+    res.json({ success: true, alreadyVerified: true, message: "Email is already verified" });
+    return;
+  }
+  if (!user.isActive) {
+    res.status(403);
+    throw new Error("This account has been deactivated");
+  }
+
+  const emailResult = await deliverVerificationCode(user);
+
+  res.json({
+    success: true,
+    sent: emailResult.sent,
+    message: emailResult.sent
+      ? `A new verification code was sent to ${user.email}`
+      : "The verification email could not be sent. Please try again later.",
   });
 });
 
@@ -84,90 +200,12 @@ export const login = asyncHandler(async (req, res) => {
     res.status(403);
     throw new Error("This account has been deactivated");
   }
-
-  res.json({
-    success: true,
-    user: user.toSafeObject(),
-    token: generateToken(user._id),
-  });
-});
-
-// @desc Send OTP to email for login
-// @route POST /api/auth/send-otp
-export const sendLoginOtp = asyncHandler(async (req, res) => {
-  const { email, password } = req.body;
-  if (!email || !password) {
-    res.status(400);
-    throw new Error("Email and password are required");
-  }
-
-  const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
-  if (!user || !(await user.comparePassword(password))) {
-    res.status(401);
-    throw new Error("Invalid email or password");
-  }
-  if (!user.isActive) {
+  if (!user.isEmailVerified) {
     res.status(403);
-    throw new Error("This account has been deactivated");
+    const err = new Error("Please verify your email address before signing in. Check your inbox or request a new verification code.");
+    err.errorCode = "EMAIL_NOT_VERIFIED";
+    throw err;
   }
-
-  const otp = generateOtp();
-  user.otpHash = hashOtp(otp);
-  user.otpExpiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
-  user.otpAttempts = 0;
-  await user.save();
-
-  const emailResult = await sendEmail({
-    to: user.email,
-    subject: "Your TaskPilot AI login code",
-    html: emailTemplates.loginOtp(user.name, otp, OTP_EXPIRY_MINUTES),
-  });
-
-  res.json({
-    success: true,
-    message: emailResult.sent
-      ? `Verification code sent to ${user.email}`
-      : `Verification code generated but email delivery failed${emailResult.reason ? `: ${emailResult.reason}` : ""}`,
-    email: user.email,
-    ...(process.env.NODE_ENV === "development" ? { devOtp: otp } : {}),
-  });
-});
-
-// @desc Verify OTP and complete login
-// @route POST /api/auth/verify-otp
-export const verifyLoginOtp = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
-  if (!email || !otp) {
-    res.status(400);
-    throw new Error("Email and OTP are required");
-  }
-
-  const user = await User.findOne({ email: email.toLowerCase() }).select("+otpHash +otpExpiresAt +otpAttempts");
-  if (!user) {
-    res.status(401);
-    throw new Error("Invalid email");
-  }
-  if (!user.otpHash || !user.otpExpiresAt || user.otpExpiresAt < new Date()) {
-    res.status(400);
-    throw new Error("OTP expired. Please request a new one.");
-  }
-  if (user.otpAttempts >= MAX_OTP_ATTEMPTS) {
-    res.status(429);
-    throw new Error("Too many incorrect attempts. Please request a new OTP.");
-  }
-
-  const valid = verifyOtpHash(otp, user.otpHash);
-  if (!valid) {
-    user.otpAttempts += 1;
-    await user.save();
-    res.status(401);
-    throw new Error(`Invalid OTP. ${MAX_OTP_ATTEMPTS - user.otpAttempts} attempt(s) remaining.`);
-  }
-
-  user.otpHash = null;
-  user.otpExpiresAt = null;
-  user.otpAttempts = 0;
-  await user.save();
 
   res.json({
     success: true,
@@ -175,6 +213,7 @@ export const verifyLoginOtp = asyncHandler(async (req, res) => {
     token: generateToken(user._id),
   });
 });
+
 export const getMe = asyncHandler(async (req, res) => {
   res.json({ success: true, user: req.user.toSafeObject() });
 });

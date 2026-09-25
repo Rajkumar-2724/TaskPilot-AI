@@ -22,6 +22,7 @@ import { detectEmergingRisks } from "./services/alertService.js";
 import { startReminderJob } from "./services/reminderService.js";
 import { startRetentionJob } from "./services/retentionService.js";
 import { initSettings } from "./services/settingsService.js";
+import { verifyEmailConfig, isEmailConfigured } from "./services/emailService.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -94,7 +95,12 @@ const aiLimiter = rateLimit({
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/api/health", (req, res) => {
-  res.json({ success: true, message: "TaskPilot AI – Predictive Infrastructure Monitoring System", time: new Date().toISOString() });
+  res.json({
+    success: true,
+    message: "TaskPilot AI – Predictive Infrastructure Monitoring System",
+    time: new Date().toISOString(),
+    emailConfigured: isEmailConfigured,
+  });
 });
 
 app.get("/", (req, res) => {
@@ -223,6 +229,7 @@ server.on("error", (err) => {
 const startServer = async () => {
   try { await initSettings(); } catch {}
   startListening();
+  verifyEmailConfig().catch(() => {});
 };
 
 connectDB().then(startServer).catch((err) => {

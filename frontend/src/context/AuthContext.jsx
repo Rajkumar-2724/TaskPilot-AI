@@ -40,10 +40,26 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (payload) => {
     const { data } = await api.post("/auth/register", payload);
+    if (data.requiresEmailVerification) {
+      return { requiresEmailVerification: true, email: data.email, emailDelivered: data.emailDelivered, message: data.message };
+    }
+    localStorage.setItem("tp_token", data.token);
+    localStorage.setItem("tp_user", JSON.stringify(data.user));
+    setUser(data.user);
+    return { requiresEmailVerification: false, user: data.user };
+  };
+
+  const verifyEmail = async (email, code) => {
+    const { data } = await api.post("/auth/verify-email", { email, code });
     localStorage.setItem("tp_token", data.token);
     localStorage.setItem("tp_user", JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
+  };
+
+  const resendVerification = async (email) => {
+    const { data } = await api.post("/auth/resend-verification", { email });
+    return data;
   };
 
   const logout = () => {
@@ -58,7 +74,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
+      <AuthContext.Provider value={{ user, loading, login, register, verifyEmail, resendVerification, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
