@@ -150,9 +150,6 @@ const RecentActivity = () => {
                         </div>
 
                         <div className="d-flex flex-wrap gap-1 mb-2">
-                          <span className="badge" style={{ background: isInfra ? "rgba(167, 139, 250, 0.15)" : "rgba(56, 189, 248, 0.12)", color: isInfra ? "#A78BFA" : "#38BDF8", fontSize: "0.68rem" }}>
-                            {isInfra ? "Infrastructure" : "Regular"}
-                          </span>
                           <span className="badge" style={{ background: rc.bg, color: rc.color, fontSize: "0.68rem" }}>
                             <i className="bi bi-person-badge me-1" />{p.role}
                           </span>

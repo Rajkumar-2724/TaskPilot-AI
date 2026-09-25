@@ -24,7 +24,7 @@ const Projects = () => {
   const [showModal, setShowModal] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [form, setForm] = useState({ name: "", description: "", deadline: "", projectType: "Project", projectCode: "", ministry: "", state: "", originalCost: "", revisedCost: "" });
+  const [form, setForm] = useState({ name: "", description: "", deadline: "" });
   const [saving, setSaving] = useState(false);
 
   const load = () => {
@@ -79,23 +79,10 @@ const Projects = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      if (form.projectType === "InfrastructureProject") {
-        const payload = {
-          name: form.name,
-          description: form.description,
-          projectCode: form.projectCode,
-          ministry: form.ministry,
-          state: form.state,
-          originalCost: form.originalCost ? Number(form.originalCost) : 0,
-          revisedCost: form.revisedCost ? Number(form.revisedCost) : 0,
-        };
-        await api.post("/infrastructure/projects", payload);
-      } else {
-        await api.post("/projects", { name: form.name, description: form.description, deadline: form.deadline, projectType: form.projectType });
-      }
+      await api.post("/projects", { name: form.name, description: form.description, deadline: form.deadline });
       toast.success("Project created successfully!");
       setShowModal(false);
-      setForm({ name: "", description: "", deadline: "", projectType: "Project", projectCode: "", ministry: "", state: "", originalCost: "", revisedCost: "" });
+      setForm({ name: "", description: "", deadline: "" });
       load();
       triggerRefresh();
     } catch (err) {
@@ -194,7 +181,7 @@ const Projects = () => {
           <div className="row g-3">
             {allProjects.map((p) => {
               const sc = statusColors[p.status] || statusColors.Planning;
-              const isInfra = p.projectType === "InfrastructureProject";
+              const progressValue = p.progress ?? p.physicalProgress ?? 0;
               return (
                 <motion.div className="col-md-6 col-lg-4" key={p._id} variants={itemVariants}>
                   <div className="tp-card p-4 h-100 d-flex flex-column justify-content-between position-relative">
@@ -213,13 +200,13 @@ const Projects = () => {
                       <div className="mb-2">
                         <div className="d-flex justify-content-between small mb-1" style={{ color: "#94A3B8", fontSize: "0.75rem" }}>
                           <span>Progress</span>
-                          <span style={{ color: "#38BDF8", fontWeight: 600 }}>{p.progress || 0}%</span>
+                          <span style={{ color: "#38BDF8", fontWeight: 600 }}>{progressValue}%</span>
                         </div>
                         <div className="progress" style={{ height: 6, background: "rgba(255,255,255,0.06)" }}>
                           <motion.div
                             className="progress-bar"
                             initial={{ width: 0 }}
-                            animate={{ width: `${p.progress || 0}%` }}
+                            animate={{ width: `${progressValue}%` }}
                             transition={{ duration: 0.8, ease: "easeOut" }}
                           />
                         </div>
@@ -231,8 +218,6 @@ const Projects = () => {
                         <i className="bi bi-people" />
                         <span>{p.members?.length || 0} members</span>
                         <span className="ms-1" style={{ color: "#38BDF8" }}>{p.taskCount || 0} tasks</span>
-                        {isInfra && <span className="badge ms-2" style={{ background: "rgba(167, 139, 250, 0.15)", color: "#A78BFA", fontSize: "0.7rem" }}>Infrastructure</span>}
-                        {!isInfra && <span className="badge ms-2" style={{ background: "rgba(56, 189, 248, 0.15)", color: "#38BDF8", fontSize: "0.7rem" }}>Regular</span>}
                       </div>
                       <div className="d-flex align-items-center gap-2">
                         <button
@@ -296,18 +281,6 @@ const Projects = () => {
                     />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label small">Project Type</label>
-                    <select
-                      className="form-select"
-                      value={form.projectType}
-                      onChange={(e) => setForm({ ...form, projectType: e.target.value })}
-                      disabled={!isManagerOrAdmin}
-                    >
-                      <option value="Project">Regular Project</option>
-                      <option value="InfrastructureProject">Infrastructure Project</option>
-                    </select>
-                  </div>
-                  <div className="mb-3">
                     <label className="form-label small">Target Deadline</label>
                     <input
                       type="date"
@@ -317,75 +290,6 @@ const Projects = () => {
                       disabled={!isManagerOrAdmin}
                     />
                   </div>
-                  {form.projectType === "InfrastructureProject" && (
-                    <>
-                      <hr style={{ borderColor: "rgba(255,255,255,0.08)" }} />
-                      <p className="small fw-bold mb-3" style={{ color: "#A78BFA" }}>
-                        <i className="bi bi-building me-1" /> Infrastructure Project Details
-                      </p>
-                      <div className="row">
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label small">Project Code <span className="text-danger">*</span></label>
-                          <input
-                            required
-                            className="form-control"
-                            value={form.projectCode}
-                            onChange={(e) => setForm({ ...form, projectCode: e.target.value })}
-                            placeholder="e.g. INFRA-2026-001"
-                            disabled={!isManagerOrAdmin}
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label small">Ministry <span className="text-danger">*</span></label>
-                          <input
-                            required
-                            className="form-control"
-                            value={form.ministry}
-                            onChange={(e) => setForm({ ...form, ministry: e.target.value })}
-                            placeholder="e.g. Ministry of Road Transport"
-                            disabled={!isManagerOrAdmin}
-                          />
-                        </div>
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label small">State <span className="text-danger">*</span></label>
-                        <input
-                          required
-                          className="form-control"
-                          value={form.state}
-                          onChange={(e) => setForm({ ...form, state: e.target.value })}
-                          placeholder="e.g. Maharashtra"
-                          disabled={!isManagerOrAdmin}
-                        />
-                      </div>
-                      <div className="row">
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label small">Original Cost (₹)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            className="form-control"
-                            value={form.originalCost}
-                            onChange={(e) => setForm({ ...form, originalCost: e.target.value })}
-                            placeholder="0"
-                            disabled={!isManagerOrAdmin}
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label small">Revised Cost (₹)</label>
-                          <input
-                            type="number"
-                            min="0"
-                            className="form-control"
-                            value={form.revisedCost}
-                            onChange={(e) => setForm({ ...form, revisedCost: e.target.value })}
-                            placeholder="0"
-                            disabled={!isManagerOrAdmin}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
                 <div className="modal-footer border-0 pt-0">
                   <button type="button" className="btn btn-light" style={{ borderRadius: 10 }} onClick={() => setShowModal(false)}>

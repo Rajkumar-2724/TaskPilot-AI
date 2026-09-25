@@ -6,26 +6,21 @@ import { useState } from "react";
 
 const navSections = [
   {
-    label: "Overview",
+    label: "Workspace",
     items: [
+      { to: "/app/projects", icon: "bi-folder2-open", label: "Projects" },
+      { to: "/app/tasks", icon: "bi-list-task", label: "Tasks" },
       { to: "/app/dashboard", icon: "bi-speedometer2", label: "Dashboard" },
+      { to: "/app/kanban", icon: "bi-kanban", label: "Kanban Board" },
+      { to: "/app/calendar", icon: "bi-calendar3", label: "Calendar" },
+      { to: "/app/gantt", icon: "bi-diagram-3", label: "Gantt Chart" },
+      { to: "/app/projects/history", icon: "bi-archive", label: "Project History" },
+      { to: "/app/tasks/history", icon: "bi-clock-history", label: "Task History" },
+      { to: "/app/overdue", icon: "bi-exclamation-octagon", label: "Overdue" },
       { to: "/app/recent", icon: "bi-activity", label: "Recent Activity" },
       { to: "/app/monitoring", icon: "bi-radar", label: "Monitoring" },
       { to: "/app/benchmarking", icon: "bi-bar-chart-line", label: "Benchmarking" },
       { to: "/app/import", icon: "bi-cloud-arrow-up", label: "Data Import" },
-    ],
-  },
-  {
-    label: "Work Management",
-    items: [
-      { to: "/app/projects", icon: "bi-folder2-open", label: "Projects" },
-      { to: "/app/projects/history", icon: "bi-archive", label: "Project History" },
-      { to: "/app/tasks", icon: "bi-list-task", label: "Tasks" },
-      { to: "/app/tasks/history", icon: "bi-clock-history", label: "Task History" },
-      { to: "/app/overdue", icon: "bi-exclamation-octagon", label: "Overdue" },
-      { to: "/app/kanban", icon: "bi-kanban", label: "Kanban Board" },
-      { to: "/app/calendar", icon: "bi-calendar3", label: "Calendar" },
-      { to: "/app/gantt", icon: "bi-diagram-3", label: "Gantt Chart" },
     ],
   },
   {

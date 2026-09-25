@@ -80,7 +80,7 @@ const Chat = () => {
           {!projects.length && <option value="">No projects available</option>}
           {projects.map((p) => (
             <option key={p._id} value={p._id}>
-              {p.name}{p.projectType === "InfrastructureProject" ? "  (Infra)" : ""}
+              {p.name}
             </option>
           ))}
         </select>

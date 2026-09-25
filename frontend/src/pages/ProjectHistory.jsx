@@ -23,7 +23,6 @@ const ProjectHistory = () => {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
   const [expanded, setExpanded] = useState({});
 
   const load = useCallback(() => {
@@ -43,8 +42,7 @@ const ProjectHistory = () => {
     const matchesSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       (p.description && p.description.toLowerCase().includes(search.toLowerCase()));
-    const matchesType = typeFilter === "All" || p.projectType === typeFilter;
-    return matchesSearch && matchesType;
+    return matchesSearch;
   });
 
   const containerVariants = {
@@ -84,18 +82,6 @@ const ProjectHistory = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
-        </div>
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          {["All", "Project", "InfrastructureProject"].map((t) => (
-            <button
-              key={t}
-              className={`btn btn-sm ${typeFilter === t ? "tp-btn-primary" : "btn-light"}`}
-              style={{ borderRadius: 10, fontSize: "0.8rem" }}
-              onClick={() => setTypeFilter(t)}
-            >
-              {t === "All" ? "All Types" : t === "Project" ? "Regular" : "Infrastructure"}
-            </button>
-          ))}
         </div>
       </motion.div>
 
@@ -138,9 +124,6 @@ const ProjectHistory = () => {
                           </Link>
                           <span className="badge" style={{ background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
                             {p.status}
-                          </span>
-                          <span className="badge" style={{ background: isInfra ? "rgba(167, 139, 250, 0.15)" : "rgba(56, 189, 248, 0.12)", color: isInfra ? "#A78BFA" : "#38BDF8", fontSize: "0.7rem" }}>
-                            {isInfra ? "Infrastructure" : "Regular"}
                           </span>
                         </div>
                         <p className="small mb-2" style={{ color: "#94A3B8", maxWidth: 700, fontSize: "0.85rem" }}>

@@ -309,9 +309,6 @@ const Overdue = () => {
                           </h6>
                         </Link>
                         <span className="badge" style={{ background: sc.bg, color: sc.color, fontSize: "0.72rem" }}>{p.status}</span>
-                        <span className="badge" style={{ background: isInfra ? "rgba(167, 139, 250, 0.15)" : "rgba(56, 189, 248, 0.12)", color: isInfra ? "#A78BFA" : "#38BDF8", fontSize: "0.7rem" }}>
-                          {isInfra ? "Infrastructure" : "Regular"}
-                        </span>
                       </div>
                       {p.description && (
                         <p className="small mb-2 text-truncate-2" style={{ color: "#94A3B8", maxWidth: 700, fontSize: "0.85rem" }}>{p.description}</p>
