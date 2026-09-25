@@ -57,6 +57,7 @@ const configuredOrigins = (process.env.CLIENT_URL || "")
 const allowedOrigins = Array.from(
   new Set([
     ...configuredOrigins,
+    "https://taskpilot-ai-frontend.vercel.app",
     "https://taskpilot-ai07.netlify.app",
     "http://localhost:5173",
   ])
