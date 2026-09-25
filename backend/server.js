@@ -49,12 +49,24 @@ app.set("trust proxy", 1);
 
 const isLocalDevOrigin = (origin) => !origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
+const configuredOrigins = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+const allowedOrigins = Array.from(
+  new Set([
+    ...configuredOrigins,
+    "https://taskpilot-ai07.netlify.app",
+    "http://localhost:5173",
+  ])
+);
+
+console.log(`[CORS] Allowed origins: ${allowedOrigins.join(", ")}`);
+
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.CLIENT_URL || "http://localhost:5173",
-      /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
-    ],
+    origin: allowedOrigins,
     credentials: true,
   },
   pingTimeout: 60000,
@@ -66,10 +78,7 @@ const io = new Server(server, {
 app.set("io", io);
 
 app.use(cors({
-  origin: [
-    process.env.CLIENT_URL || "http://localhost:5173",
-    /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/,
-  ],
+  origin: allowedOrigins,
   credentials: true,
 }));
 app.use(helmet());

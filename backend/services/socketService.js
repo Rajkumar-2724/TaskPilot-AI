@@ -8,27 +8,57 @@ const onlineUsers = new Map(); // userId -> Set(socketId)
 
 export const initSocket = (io) => {
   io.use(async (socket, next) => {
+    const handshakeAddress = socket.handshake.address;
     try {
       const token = socket.handshake.auth?.token;
-      if (!token) return next(new Error("Authentication required"));
+      if (!token) {
+        console.warn(`[Socket] Auth rejected (no token) from ${handshakeAddress} | origin=${socket.handshake.headers.origin || "none"}`);
+        return next(new Error("Authentication required"));
+      }
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await User.findById(decoded.id);
-      if (!user) return next(new Error("User not found"));
-      if (!user.isActive) return next(new Error("Account deactivated"));
+      if (!user) {
+        console.warn(`[Socket] Auth rejected (user not found) for id=${decoded.id} from ${handshakeAddress}`);
+        return next(new Error("User not found"));
+      }
+      if (!user.isActive) {
+        console.warn(`[Socket] Auth rejected (inactive account) for ${user.email} from ${handshakeAddress}`);
+        return next(new Error("Account deactivated"));
+      }
       socket.user = user;
       next();
     } catch (err) {
+      console.error(`[Socket] Auth failed from ${handshakeAddress} | origin=${socket.handshake.headers.origin || "none"} | reason=${err.message}`);
       next(new Error("Authentication failed"));
     }
   });
 
+  io.engine.on("connection_error", (err) => {
+    console.error(`[Socket] Engine connection_error | code=${err.code} | message=${err.message}`);
+  });
+
   io.on("connection", (socket) => {
     const userId = socket.user._id.toString();
+    const startedAt = Date.now();
     socket.join(`user:${userId}`);
 
     if (!onlineUsers.has(userId)) onlineUsers.set(userId, new Set());
     onlineUsers.get(userId).add(socket.id);
     io.emit("presence:online", Array.from(onlineUsers.keys()));
+
+    console.log(
+      `[Socket] CONNECTED id=${socket.id} user=${userId} transport=${socket.conn.transport.name} ` +
+      `origin=${socket.handshake.headers.origin || "none"} address=${socket.handshake.address} ` +
+      `totalOnline=${onlineUsers.size} onlineSockets=${io.engine.clientsCount}`
+    );
+
+    socket.on("connect_error", (err) => {
+      console.error(`[Socket] Socket-level connect_error id=${socket.id} user=${userId} | ${err.message}`);
+    });
+
+    socket.on("error", (err) => {
+      console.error(`[Socket] Socket error id=${socket.id} user=${userId} | ${err.message || err}`);
+    });
 
     socket.on("project:join", (projectId) => {
       socket.join(`project:${projectId}`);
@@ -68,13 +98,18 @@ export const initSocket = (io) => {
       });
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", (reason, detail) => {
       const set = onlineUsers.get(userId);
       if (set) {
         set.delete(socket.id);
         if (set.size === 0) onlineUsers.delete(userId);
       }
       io.emit("presence:online", Array.from(onlineUsers.keys()));
+      console.log(
+        `[Socket] DISCONNECTED id=${socket.id} user=${userId} reason=${reason} ` +
+        `uptimeMs=${Date.now() - startedAt} transport=${socket.conn.transport.name} ` +
+        `totalOnline=${onlineUsers.size} onlineSockets=${io.engine.clientsCount}${detail ? ` | detail=${detail.description || detail}` : ""}`
+      );
     });
   });
 };
