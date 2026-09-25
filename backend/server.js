@@ -44,6 +44,8 @@ import assistantRoutes from "./routes/assistantRoutes.js";
 const app = express();
 const server = http.createServer(app);
 
+app.set("trust proxy", 1);
+
 const isLocalDevOrigin = (origin) => !origin || /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
 
 const io = new Server(server, {

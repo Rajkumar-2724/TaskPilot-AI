@@ -30,6 +30,7 @@ const __dirname = path.dirname(__filename);
 
 export const createApp = (ioInstance = null) => {
   const app = express();
+  app.set("trust proxy", 1);
   if (ioInstance) {
     app.set("io", ioInstance);
   }
