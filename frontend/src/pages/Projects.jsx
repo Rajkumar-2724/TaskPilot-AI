@@ -29,7 +29,17 @@ const Projects = () => {
 
   const load = () => {
     setLoading(true);
-    api.get("/projects", { params: { excludeOverdue: true } }).then(({ data }) => setProjects(data.projects || [])).catch(() => {}).finally(() => setLoading(false));
+    Promise.allSettled([
+      api.get("/projects", { params: { excludeOverdue: true } }),
+      api.get("/infrastructure/projects"),
+    ])
+      .then(([regular, infra]) => {
+        const reg = regular.status === "fulfilled" ? regular.value.data.projects || [] : [];
+        const inf = infra.status === "fulfilled" ? infra.value.data.projects || [] : [];
+        setProjects([...reg, ...inf]);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   };
 
   useEffect(load, []);
