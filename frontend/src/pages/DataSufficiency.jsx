@@ -239,7 +239,8 @@ const notRun = data?.status === "not_run";
               const sector = e.target.value;
               if (!sector) return;
               api.get(`/cuf/projects/search?sector=${sector}`).then(({ data: res }) => {
-                if (res.projects.length > 0) handleProjectSelect(res.projects[0]);
+                const matches = Array.isArray(res.projects) ? res.projects : [];
+                if (matches.length > 0) handleProjectSelect(matches[0]);
                 else toast.warning(`No infrastructure projects found in sector: ${sector}`);
               }).catch(() => toast.error("Failed to search projects"));
             }}>

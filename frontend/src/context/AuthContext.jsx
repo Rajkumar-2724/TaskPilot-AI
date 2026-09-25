@@ -30,12 +30,22 @@ export const AuthProvider = ({ children }) => {
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email, password) => {
-    const { data } = await api.post("/auth/login", { email, password });
+  const persistSession = (data) => {
+    if (!data || data.success === false || !data.token || !data.user) {
+      const message = (data && data.message) || "Authentication failed. Please try again.";
+      const error = new Error(message);
+      error.response = { data: { message, code: data && data.code } };
+      throw error;
+    }
     localStorage.setItem("tp_token", data.token);
     localStorage.setItem("tp_user", JSON.stringify(data.user));
     setUser(data.user);
     return data.user;
+  };
+
+  const login = async (email, password) => {
+    const { data } = await api.post("/auth/login", { email, password });
+    return persistSession(data);
   };
 
   const register = async (payload) => {
@@ -43,18 +53,12 @@ export const AuthProvider = ({ children }) => {
     if (data.requiresEmailVerification) {
       return { requiresEmailVerification: true, email: data.email, emailDelivered: data.emailDelivered, message: data.message };
     }
-    localStorage.setItem("tp_token", data.token);
-    localStorage.setItem("tp_user", JSON.stringify(data.user));
-    setUser(data.user);
-    return { requiresEmailVerification: false, user: data.user };
+    return { requiresEmailVerification: false, user: persistSession(data) };
   };
 
   const verifyEmail = async (email, code) => {
     const { data } = await api.post("/auth/verify-email", { email, code });
-    localStorage.setItem("tp_token", data.token);
-    localStorage.setItem("tp_user", JSON.stringify(data.user));
-    setUser(data.user);
-    return data.user;
+    return persistSession(data);
   };
 
   const resendVerification = async (email) => {

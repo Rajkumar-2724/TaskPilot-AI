@@ -20,8 +20,15 @@ const Dashboard = () => {
   useEffect(() => {
     setLoading(true);
     api.get("/dashboard/stats")
-      .then(({ data }) => { setStats(data.stats); const charts = data.charts || { tasksByStatus: [], tasksByPriority: [], weeklyProductivity: [] };
-    setCharts(charts); })
+      .then(({ data }) => {
+        setStats(data.stats);
+        const charts = data.charts || {};
+        setCharts({
+          tasksByStatus: Array.isArray(charts.tasksByStatus) ? charts.tasksByStatus : [],
+          tasksByPriority: Array.isArray(charts.tasksByPriority) ? charts.tasksByPriority : [],
+          weeklyProductivity: Array.isArray(charts.weeklyProductivity) ? charts.weeklyProductivity : [],
+        });
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [refreshKey]);

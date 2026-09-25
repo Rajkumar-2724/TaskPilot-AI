@@ -11,7 +11,9 @@ const Leaderboard = () => {
 
   useEffect(() => {
     api.get("/leaderboard").then(({ data }) => {
-      setLeaderboard(data.leaderboard);
+      setLeaderboard(Array.isArray(data.leaderboard) ? data.leaderboard : []);
+    }).catch(() => {
+      toast.error("Failed to load leaderboard");
     }).finally(() => setLoading(false));
   }, []);
 
