@@ -93,6 +93,12 @@ export const emailStatus = () => ({
   lastSend,
 });
 
+// Retry on transient transport errors (timeout, reset, refusal). If all
+// attempts fail the caller still gets { sent: false }.
+const MAX_SEND_ATTEMPTS = 3;
+const RETRY_DELAY_MS = (attempt) => [0, 1000, 2500][attempt] ?? 3000;
+const TRANSIENT = /timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|ECONNABORTED|EPROTO/i;
+
 export const sendEmail = async ({ to, subject, html }) => {
   if (!transporter) {
     const reason = "SMTP not configured";
@@ -100,21 +106,34 @@ export const sendEmail = async ({ to, subject, html }) => {
     lastSend = { sent: false, to, subject, reason, at: new Date().toISOString() };
     return { sent: false, reason };
   }
-  try {
-    const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
-      to,
-      subject,
-      html,
-    });
-    console.log(`[Email:sent] To: ${to} | Subject: ${subject} | id=${info.messageId}`);
-    lastSend = { sent: true, to, subject, reason: null, at: new Date().toISOString() };
-    return { sent: true, messageId: info.messageId };
-  } catch (err) {
-    console.error(`[Email] send FAILED to ${to} | ${err.code || ""} ${err.message}`);
-    lastSend = { sent: false, to, subject, reason: `${err.code || "ERROR"}: ${err.message}`, at: new Date().toISOString() };
-    return { sent: false, reason: err.message };
+  let lastError = null;
+  for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
+    try {
+      const info = await transporter.sendMail({
+        from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
+        to,
+        subject,
+        html,
+      });
+      console.log(`[Email:sent] attempt ${attempt} To: ${to} | Subject: ${subject} | id=${info.messageId}`);
+      lastSend = { sent: true, to, subject, reason: null, at: new Date().toISOString() };
+      return { sent: true, messageId: info.messageId };
+    } catch (err) {
+      lastError = err;
+      const transient = TRANSIENT.test(err.message || err.code || "");
+      if (attempt < MAX_SEND_ATTEMPTS && transient) {
+        const ms = RETRY_DELAY_MS(attempt);
+        console.warn(`[Email:retry ${attempt}/${MAX_SEND_ATTEMPTS}] ${err.code || ""} ${err.message} — waiting ${ms}ms`);
+        await new Promise((r) => setTimeout(r, ms));
+      } else {
+        break;
+      }
+    }
   }
+  console.error(`[Email] send FAILED after ${MAX_SEND_ATTEMPTS} attempts to ${to} | ${lastError?.code || ""} ${lastError?.message}`);
+  const reason = `${lastError?.code || "ERROR"}: ${lastError?.message}`;
+  lastSend = { sent: false, to, subject, reason, at: new Date().toISOString() };
+  return { sent: false, reason };
 };
 
 // For flows where the emailed code IS the login/verification credential: a
