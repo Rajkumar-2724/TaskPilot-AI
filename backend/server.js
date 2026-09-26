@@ -24,6 +24,7 @@ import { startRetentionJob } from "./services/retentionService.js";
 import { initSettings } from "./services/settingsService.js";
 import { verifyEmailConfig, isEmailConfigured } from "./services/emailService.js";
 import { mlServiceAvailable, mlServiceUrl, warmUpMlService } from "./services/mlClient.js";
+import { mlServiceUrlSource, usingDefaultMlUrl } from "./config/mlService.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -115,6 +116,8 @@ app.get("/api/health", async (req, res) => {
     mlService: {
       url: mlServiceUrl(),
       available: ml.available,
+      source: mlServiceUrlSource,
+      ...(usingDefaultMlUrl ? { warning: "ML_SERVICE_URL is not set on this host; using the built-in default." } : {}),
       ...(ml.available ? {} : { error: ml.error }),
     },
   });

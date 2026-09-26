@@ -1,6 +1,5 @@
 import axios from "axios";
-
-const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://localhost:8000";
+import { ML_SERVICE_URL } from "../config/mlService.js";
 
 // Thin helpers used by the model-management & CUF endpoints.
 // Every call keeps the same "graceful degradation" contract as predictionService:
