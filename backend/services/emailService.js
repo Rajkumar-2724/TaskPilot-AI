@@ -107,15 +107,11 @@ export const emailStatus = () => {
   };
 };
 
-// Use BREVO_API_KEY explicitly, or fall back to SMTP_PASS when
-// it is a Brevo key (starts with xsmtpsib-) so the REST API path
-// works immediately with the existing SMTP credentials.
-const BREVO_API_KEY =
-  process.env.BREVO_API_KEY ||
-  (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith("xsmtpsib-")
-    ? process.env.SMTP_PASS
-    : null) ||
-  null;
+// Use BREVO_API_KEY only. It is a Brevo HTTP API key
+// (starts with xkeysib-) generated at brevo.com → Settings → API Keys.
+// This is NOT the same as the SMTP key (which starts with xsmtpsib-).
+// The SMTP key cannot authenticate against the REST API.
+const BREVO_API_KEY = process.env.BREVO_API_KEY || null;
 const BREVO_API_URL = "https://api.brevo.com/v3/sendEmail";
 
 const brevoRequest = async ({ to, subject, html }) => {
