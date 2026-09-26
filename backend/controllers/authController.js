@@ -12,6 +12,11 @@ const MAX_VERIFICATION_ATTEMPTS = 5;
 const LOGIN_OTP_EXPIRY_MINUTES = 10;
 const MAX_LOGIN_OTP_ATTEMPTS = 5;
 
+// The OTP step depends on working SMTP. If email delivery is down there would
+// otherwise be no way to sign in at all, so this can be turned off via env.
+const requireLoginOtp = () => String(process.env.REQUIRE_LOGIN_OTP || "true").toLowerCase() !== "false";
+export const loginOtpRequired = requireLoginOtp;
+
 const generateOtp = () => crypto.randomInt(100000, 1000000).toString();
 
 const hashOtp = (otp) => {
@@ -250,6 +255,15 @@ export const login = asyncHandler(async (req, res) => {
     const err = new Error("Please verify your email address before signing in. Check your inbox or request a new verification code.");
     err.errorCode = "EMAIL_NOT_VERIFIED";
     throw err;
+  }
+
+  if (!requireLoginOtp()) {
+    return res.json({
+      success: true,
+      requiresOtp: false,
+      user: user.toSafeObject(),
+      token: generateToken(user._id),
+    });
   }
 
   let challenge;

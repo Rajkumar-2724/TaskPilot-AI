@@ -24,6 +24,7 @@ import { startRetentionJob } from "./services/retentionService.js";
 import { initSettings } from "./services/settingsService.js";
 import { verifyEmailConfig, isEmailConfigured, emailStatus, probeSmtpPorts } from "./services/emailService.js";
 import { mlServiceUrl, warmUpMlService, cachedMlServiceHealth, isCachedHealthStale } from "./services/mlClient.js";
+import { loginOtpRequired } from "./controllers/authController.js";
 import { mlServiceUrlSource, usingDefaultMlUrl } from "./config/mlService.js";
 
 import authRoutes from "./routes/authRoutes.js";
@@ -114,6 +115,7 @@ app.get("/api/health", (req, res) => {
     time: new Date().toISOString(),
     emailConfigured: isEmailConfigured,
     email: emailStatus(),
+    loginOtpRequired: loginOtpRequired(),
     mlService: {
       url: mlServiceUrl(),
       available: ml.available,
