@@ -32,6 +32,10 @@ services:
         sync: false
       - key: CLOUDINARY_API_SECRET
         sync: false
+      # Email (SMTP). Set SMTP_HOST, SMTP_USER, SMTP_PASS on the dashboard.
+      # Gmail blocks outbound SMTP from cloud IPs, so smtp.gmail.com will
+      # not work from this host — use a provider built for server-side sending.
+      # When using Gmail, SMTP_FROM must match the authenticated account.
       - key: SMTP_HOST
         sync: false
       - key: SMTP_PORT
@@ -41,7 +45,7 @@ services:
       - key: SMTP_PASS
         sync: false
       - key: SMTP_FROM
-        value: "TaskPilot AI <no-reply@taskpilot.ai>"
+        sync: false
 
   # ML service (FastAPI + scikit-learn)
   - type: web
