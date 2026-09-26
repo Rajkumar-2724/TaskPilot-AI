@@ -23,6 +23,7 @@ import { startReminderJob } from "./services/reminderService.js";
 import { startRetentionJob } from "./services/retentionService.js";
 import { initSettings } from "./services/settingsService.js";
 import { verifyEmailConfig, isEmailConfigured } from "./services/emailService.js";
+import { mlServiceAvailable, mlServiceUrl, warmUpMlService } from "./services/mlClient.js";
 
 import authRoutes from "./routes/authRoutes.js";
 import projectRoutes from "./routes/projectRoutes.js";
@@ -104,12 +105,18 @@ const aiLimiter = rateLimit({
 });
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.get("/api/health", (req, res) => {
+app.get("/api/health", async (req, res) => {
+  const ml = await mlServiceAvailable();
   res.json({
     success: true,
     message: "TaskPilot AI – Predictive Infrastructure Monitoring System",
     time: new Date().toISOString(),
     emailConfigured: isEmailConfigured,
+    mlService: {
+      url: mlServiceUrl(),
+      available: ml.available,
+      ...(ml.available ? {} : { error: ml.error }),
+    },
   });
 });
 
@@ -240,6 +247,7 @@ const startServer = async () => {
   try { await initSettings(); } catch {}
   startListening();
   verifyEmailConfig().catch(() => {});
+  warmUpMlService().catch(() => {});
 };
 
 connectDB().then(startServer).catch((err) => {

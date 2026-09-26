@@ -39,6 +39,12 @@ userSchema.methods.comparePassword = async function (candidate) {
 userSchema.methods.toSafeObject = function () {
   const obj = this.toObject();
   delete obj.password;
+  delete obj.otpHash;
+  delete obj.otpExpiresAt;
+  delete obj.otpAttempts;
+  delete obj.verificationCodeHash;
+  delete obj.verificationExpiresAt;
+  delete obj.verificationAttempts;
   return obj;
 };
 

@@ -1,5 +1,6 @@
 import asyncHandler from "express-async-handler";
 import crypto from "crypto";
+import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
 import { sendEmail, emailTemplates } from "../services/emailService.js";
@@ -8,6 +9,8 @@ import cloudinary from "../config/cloudinary.js";
 
 const VERIFICATION_EXPIRY_MINUTES = 30;
 const MAX_VERIFICATION_ATTEMPTS = 5;
+const LOGIN_OTP_EXPIRY_MINUTES = 10;
+const MAX_LOGIN_OTP_ATTEMPTS = 5;
 
 const generateOtp = () => crypto.randomInt(100000, 1000000).toString();
 
@@ -42,6 +45,44 @@ const deliverVerificationCode = async (user) => {
     subject: "Verify your TaskPilot AI email address",
     html: emailTemplates.emailVerification(user.name, code, VERIFICATION_EXPIRY_MINUTES),
   });
+};
+
+// --- Login OTP (second factor for every sign-in) ---
+// The challenge token is short-lived and purpose-scoped so it can never be
+// mistaken for a session token, even though it is signed with the same secret.
+const generateLoginChallenge = (userId) =>
+  jwt.sign({ id: userId, purpose: "otp-login" }, process.env.JWT_SECRET, { expiresIn: `${LOGIN_OTP_EXPIRY_MINUTES}m` });
+
+const readLoginChallenge = (token) => {
+  try {
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    return payload.purpose === "otp-login" ? payload : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearLoginOtp = async (user) => {
+  user.otpHash = undefined;
+  user.otpExpiresAt = undefined;
+  user.otpAttempts = 0;
+  await user.save();
+};
+
+const deliverLoginOtp = async (user) => {
+  const otp = generateOtp();
+  user.otpHash = hashOtp(otp);
+  user.otpExpiresAt = new Date(Date.now() + LOGIN_OTP_EXPIRY_MINUTES * 60 * 1000);
+  user.otpAttempts = 0;
+  await user.save();
+
+  await sendEmail({
+    to: user.email,
+    subject: "Your TaskPilot AI login code",
+    html: emailTemplates.loginOtp(user.name, otp, LOGIN_OTP_EXPIRY_MINUTES),
+  });
+
+  return generateLoginChallenge(user._id);
 };
 
 // @desc Register new user
@@ -182,7 +223,7 @@ export const resendVerification = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc Login
+// @desc Login - verifies credentials, then emails a one-time code
 // @route POST /api/auth/login
 export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -207,10 +248,111 @@ export const login = asyncHandler(async (req, res) => {
     throw err;
   }
 
+  let challenge;
+  try {
+    challenge = await deliverLoginOtp(user);
+  } catch (err) {
+    console.error("[Auth] Failed to send login OTP:", err.message);
+    res.status(503);
+    const e = new Error("Could not email your login code. Please try again in a moment.");
+    e.errorCode = "OTP_EMAIL_FAILED";
+    throw e;
+  }
+
   res.json({
     success: true,
-    user: user.toSafeObject(),
-    token: generateToken(user._id),
+    requiresOtp: true,
+    challenge,
+    email: user.email,
+    expiresInSeconds: LOGIN_OTP_EXPIRY_MINUTES * 60,
+    message: `We emailed a ${LOGIN_OTP_EXPIRY_MINUTES}-minute login code to ${user.email}.`,
+  });
+});
+
+// @desc Confirm a login OTP and receive the session token
+// @route POST /api/auth/verify-login-otp
+export const verifyLoginOtp = asyncHandler(async (req, res) => {
+  const { challenge, otp } = req.body;
+  if (!challenge || !otp) {
+    res.status(400);
+    throw new Error("Challenge and OTP are required");
+  }
+
+  const payload = readLoginChallenge(challenge);
+  if (!payload) {
+    res.status(400);
+    const err = new Error("This login request has expired. Please sign in again.");
+    err.errorCode = "OTP_CHALLENGE_INVALID";
+    throw err;
+  }
+
+  const user = await User.findById(payload.id).select("+otpHash +otpExpiresAt +otpAttempts");
+  if (!user || !user.isActive || !user.otpHash) {
+    res.status(400);
+    const err = new Error("This login request has expired. Please sign in again.");
+    err.errorCode = "OTP_CHALLENGE_INVALID";
+    throw err;
+  }
+
+  if (user.otpExpiresAt && user.otpExpiresAt.getTime() < Date.now()) {
+    await clearLoginOtp(user);
+    res.status(400);
+    const err = new Error("That code has expired. Please sign in again.");
+    err.errorCode = "OTP_EXPIRED";
+    throw err;
+  }
+
+  if (user.otpAttempts >= MAX_LOGIN_OTP_ATTEMPTS) {
+    await clearLoginOtp(user);
+    res.status(429);
+    const err = new Error("Too many incorrect attempts. Please sign in again.");
+    err.errorCode = "OTP_ATTEMPTS_EXCEEDED";
+    throw err;
+  }
+
+  if (!verifyOtpHash(String(otp), user.otpHash)) {
+    user.otpAttempts = (user.otpAttempts || 0) + 1;
+    await user.save();
+    res.status(401);
+    const err = new Error("Incorrect code. Please check your email and try again.");
+    err.errorCode = "OTP_INVALID";
+    throw err;
+  }
+
+  await clearLoginOtp(user);
+  res.json({ success: true, user: user.toSafeObject(), token: generateToken(user._id) });
+});
+
+// @desc Resend the login OTP for an in-flight login
+// @route POST /api/auth/resend-login-otp
+export const resendLoginOtp = asyncHandler(async (req, res) => {
+  const { challenge } = req.body;
+  if (!challenge) {
+    res.status(400);
+    throw new Error("Challenge is required");
+  }
+
+  const payload = readLoginChallenge(challenge);
+  if (!payload) {
+    res.status(400);
+    const err = new Error("This login request has expired. Please sign in again.");
+    err.errorCode = "OTP_CHALLENGE_INVALID";
+    throw err;
+  }
+
+  const user = await User.findById(payload.id);
+  if (!user || !user.isActive) {
+    res.status(400);
+    const err = new Error("This login request has expired. Please sign in again.");
+    err.errorCode = "OTP_CHALLENGE_INVALID";
+    throw err;
+  }
+
+  await deliverLoginOtp(user);
+  res.json({
+    success: true,
+    expiresInSeconds: LOGIN_OTP_EXPIRY_MINUTES * 60,
+    message: `A new code was emailed to ${user.email}.`,
   });
 });
 

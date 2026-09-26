@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { toast } from "react-toastify";
@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import AnimatedBackground3D from "../components/AnimatedBackground3D.jsx";
 
 const Login = () => {
-  const { login, resendVerification } = useAuth();
+  const { login, verifyLoginOtp, resendLoginOtp, resendVerification } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
@@ -14,13 +14,32 @@ const Login = () => {
   const [resending, setResending] = useState(false);
   const passwordRef = useRef(null);
 
+  // OTP step state
+  const [challenge, setChallenge] = useState(null);
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpError, setOtpError] = useState("");
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [resendingOtp, setResendingOtp] = useState(false);
+  const otpRef = useRef(null);
+
+  useEffect(() => {
+    if (!challenge) return undefined;
+    const id = setInterval(() => setSecondsLeft((s) => (s > 0 ? s - 1 : 0)), 1000);
+    return () => clearInterval(id);
+  }, [challenge]);
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setOtpError("");
     try {
-      await login(form.email, form.password);
-      toast.success("Welcome back!");
-      navigate("/app/dashboard");
+      const result = await login(form.email, form.password);
+      setChallenge(result.challenge);
+      setOtpEmail(result.email);
+      setSecondsLeft(result.expiresInSeconds || 600);
+      setOtp("");
+      toast.success(result.message || "Login code sent");
     } catch (err) {
       const needsVerification = err.response?.data?.code === "EMAIL_NOT_VERIFIED";
       setUnverified(needsVerification);
@@ -32,6 +51,54 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleVerifyOtp = async (e) => {
+    e.preventDefault();
+    if (otp.length !== 6) {
+      setOtpError("Enter the 6-digit code from your email.");
+      return;
+    }
+    setLoading(true);
+    setOtpError("");
+    try {
+      await verifyLoginOtp(challenge, otp);
+      toast.success("Welcome back!");
+      navigate("/app/dashboard");
+    } catch (err) {
+      const message = err.response?.data?.message || "That code is not valid.";
+      setOtpError(message);
+      setOtp("");
+      otpRef.current?.focus();
+      if (["OTP_CHALLENGE_INVALID", "OTP_EXPIRED", "OTP_ATTEMPTS_EXCEEDED"].includes(err.response?.data?.code)) {
+        setChallenge(null);
+        toast.error(`${message} Sign in again to get a new code.`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    setResendingOtp(true);
+    try {
+      const data = await resendLoginOtp(challenge);
+      setSecondsLeft(data.expiresInSeconds || 600);
+      setOtp("");
+      setOtpError("");
+      toast.success(data.message || "A new code was emailed");
+    } catch (err) {
+      setOtpError(err.response?.data?.message || "Could not send a new code");
+    } finally {
+      setResendingOtp(false);
+    }
+  };
+
+  const backToPassword = () => {
+    setChallenge(null);
+    setOtp("");
+    setOtpError("");
+    setSecondsLeft(0);
   };
 
   const handleResend = async () => {
@@ -87,13 +154,92 @@ const Login = () => {
               <i className="bi bi-stars" style={{ color: '#fff', fontSize: '1.3rem' }} />
             </div>
             <h3 className="fw-bold mb-1 tp-gradient-text" style={{ fontFamily: '"Plus Jakarta Sans", sans-serif' }}>
-              Welcome back
+              {challenge ? "Check your email" : "Welcome back"}
             </h3>
             <p style={{ color: '#94A3B8', fontSize: '0.9rem' }}>
-              Login to your TaskPilot AI workspace
+              {challenge ? "Enter the 6-digit code we just emailed you" : "Login to your TaskPilot AI workspace"}
             </p>
           </motion.div>
 
+          {challenge ? (
+            <motion.form onSubmit={handleVerifyOtp} variants={containerVariants} initial="hidden" animate="visible">
+              <motion.div className="alert alert-info py-2 small" variants={itemVariants} style={{ background: 'rgba(56,189,248,0.10)', border: '1px solid rgba(56,189,248,0.25)', color: '#BAE6FD' }}>
+                <i className="bi bi-envelope-check me-1" />
+                <div>
+                  Code sent to <strong>{otpEmail}</strong>
+                  {secondsLeft > 0 && (
+                    <div className="mt-1" style={{ fontSize: '0.78rem', opacity: 0.85 }}>
+                      Expires in {Math.floor(secondsLeft / 60)}:{String(secondsLeft % 60).padStart(2, "0")}
+                    </div>
+                  )}
+                </div>
+              </motion.div>
+
+              <motion.div className="mb-3" variants={itemVariants}>
+                <label className="form-label">6-digit code</label>
+                <motion.input
+                  ref={otpRef}
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  maxLength={6}
+                  className="form-control text-center"
+                  style={{ fontSize: '1.5rem', letterSpacing: '0.5rem', fontWeight: 700 }}
+                  value={otp}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "").slice(0, 6);
+                    setOtp(v);
+                    if (otpError) setOtpError("");
+                  }}
+                  placeholder="000000"
+                  whileFocus={{ scale: 1.01 }}
+                />
+                {otpError && (
+                  <div className="small mt-1" style={{ color: '#FCA5A5' }}>
+                    <i className="bi bi-exclamation-circle me-1" />{otpError}
+                  </div>
+                )}
+              </motion.div>
+
+              <motion.button
+                type="submit"
+                className="tp-btn-primary w-100 mb-3"
+                disabled={loading || otp.length !== 6}
+                variants={itemVariants}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                style={{ borderRadius: 14, padding: '0.8rem' }}
+              >
+                {loading ? (
+                  <motion.span animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}>
+                    ⏳
+                  </motion.span>
+                ) : (
+                  "Verify & Sign In"
+                )}
+              </motion.button>
+
+              <div className="d-flex justify-content-between align-items-center">
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm p-0"
+                  style={{ color: '#94A3B8', textDecoration: 'none' }}
+                  onClick={backToPassword}
+                >
+                  <i className="bi bi-arrow-left me-1" />Use a different account
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-link btn-sm p-0"
+                  style={{ color: '#38BDF8', textDecoration: 'none' }}
+                  onClick={handleResendOtp}
+                  disabled={resendingOtp}
+                >
+                  {resendingOtp ? "Sending…" : "Resend code"}
+                </button>
+              </div>
+            </motion.form>
+          ) : (
           <motion.form onSubmit={handleLogin} variants={containerVariants} initial="hidden" animate="visible">
             {unverified && (
               <motion.div className="alert alert-warning py-2 small" variants={itemVariants}>
@@ -155,6 +301,7 @@ const Login = () => {
               )}
             </motion.button>
           </motion.form>
+          )}
 
           <motion.p className="text-center small mt-4 mb-0" variants={itemVariants} style={{ color: '#94A3B8' }}>
             Don't have an account? <Link to="/register" style={{ color: '#38BDF8', fontWeight: 600 }}>Sign up</Link>

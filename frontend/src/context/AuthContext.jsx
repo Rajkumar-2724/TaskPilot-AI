@@ -45,7 +45,31 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await api.post("/auth/login", { email, password });
+    // Login is a two-step flow: credentials are checked, then an emailed OTP
+    // confirms the session. No token is issued until the OTP is verified.
+    if (!data?.requiresOtp || !data.challenge) {
+      const message = data?.message || "Login did not return a verification step. Please try again.";
+      const error = new Error(message);
+      error.response = { data: { message, code: data?.code } };
+      throw error;
+    }
+    return {
+      requiresOtp: true,
+      challenge: data.challenge,
+      email: data.email,
+      expiresInSeconds: data.expiresInSeconds,
+      message: data.message,
+    };
+  };
+
+  const verifyLoginOtp = async (challenge, otp) => {
+    const { data } = await api.post("/auth/verify-login-otp", { challenge, otp });
     return persistSession(data);
+  };
+
+  const resendLoginOtp = async (challenge) => {
+    const { data } = await api.post("/auth/resend-login-otp", { challenge });
+    return data;
   };
 
   const register = async (payload) => {
@@ -78,7 +102,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   return (
-      <AuthContext.Provider value={{ user, loading, login, register, verifyEmail, resendVerification, logout, updateUser }}>
+      <AuthContext.Provider value={{ user, loading, login, verifyLoginOtp, resendLoginOtp, register, verifyEmail, resendVerification, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );

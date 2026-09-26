@@ -7,13 +7,30 @@ const ML_SERVICE_URL = process.env.ML_SERVICE_URL || "http://localhost:8000";
 // if the Python ML service is unreachable we surface a clear JSON message instead
 // of silently faking results.
 
+export const mlServiceUrl = () => ML_SERVICE_URL;
+
+// Render free-tier cold starts can exceed 5s, so a healthy-but-waking service
+// must not be reported as "unreachable".
 export const mlServiceAvailable = async () => {
   try {
-    const res = await axios.get(`${ML_SERVICE_URL}/api/health`, { timeout: 5000 });
-    return { available: true, data: res.data };
+    const res = await axios.get(`${ML_SERVICE_URL}/api/health`, { timeout: 20000 });
+    return { available: true, data: res.data, error: null };
   } catch (err) {
-    return { available: false, data: null };
+    const error = err.code || err.message || "unknown error";
+    console.warn(`[ML Service] health check failed for ${ML_SERVICE_URL}: ${error}`);
+    return { available: false, data: null, error };
   }
+};
+
+// Best-effort warm-up so the first real user request doesn't hit a cold start.
+export const warmUpMlService = async () => {
+  const health = await mlServiceAvailable();
+  console.log(
+    health.available
+      ? `[ML Service] reachable at ${ML_SERVICE_URL}`
+      : `[ML Service] NOT reachable at ${ML_SERVICE_URL} (${health.error}). Set ML_SERVICE_URL on the backend service.`
+  );
+  return health;
 };
 
 export const callMlTrainModels = async () => {
