@@ -2,6 +2,7 @@ import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";
+import https from "https";
 
 dotenv.config({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../.env") });
 
@@ -89,18 +90,71 @@ export const probeSmtpPorts = async () => {
 export const emailStatus = () => {
   const blocked = Object.values(portProbe).filter((p) => !p.ok).length;
   const allBlocked = blocked === Object.keys(portProbe).length;
+  const transport = BREVO_API_KEY ? "Brevo REST API (HTTPS 443)" : (isConfigured ? "SMTP" : "none");
   return {
-    configured: isEmailConfigured,
+    configured: isConfigured || !!BREVO_API_KEY,
     smtpHost: process.env.SMTP_HOST || null,
     smtpPort: Number(process.env.SMTP_PORT) || 587,
     from: process.env.SMTP_FROM || null,
+    brevoApiKeyPresent: !!BREVO_API_KEY,
+    transport,
     portProbe,
     lastSend,
     hostReachable: !allBlocked,
     note: allBlocked
-      ? "SMTP is unreachable from this host on every tested port. This is an outbound-network restriction, not a bad credential or a code bug: consumer SMTP providers (including Gmail) block cloud IP ranges. Use a provider built for server-side sending or change hosts."
-      : "SMTP is reachable; delivery should work. If mail still isn't arriving, check SMTP credentials and the recipient address.",
+      ? "Outbound SMTP is blocked from this host. Set BREVO_API_KEY in the environment to use the Brevo REST API over HTTPS (port 443) instead — it is not affected by the SMTP block. See render.yaml and .env.example."
+      : "SMTP is reachable; delivery should work.",
   };
+};
+
+// --- Brevo REST API over HTTPS (port 443 — never blocked by Render's
+// free tier). Used as the primary path when BREVO_API_KEY is set.
+// Falls back to SMTP below if no API key is present.
+const BREVO_API_KEY = process.env.BREVO_API_KEY || null;
+const BREVO_API_URL = "https://api.brevo.com/v3/sendEmail";
+
+const brevoRequest = async ({ to, subject, html }) => {
+  const body = JSON.stringify({
+    sender: { name: "TaskPilot AI", email: process.env.SMTP_USER || "no-reply@taskpilot.ai" },
+    to: [{ email: to }],
+    subject,
+    htmlContent: html,
+  });
+  return new Promise((resolve, reject) => {
+    const req = https.request(
+      BREVO_API_URL,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Api-Key": BREVO_API_KEY,
+          Accept: "application/json",
+          "Content-Length": Buffer.byteLength(body),
+        },
+        timeout: 20000,
+      },
+      (res) => {
+        let data = "";
+        res.on("data", (chunk) => (data += chunk));
+        res.on("end", () => {
+          try {
+            const parsed = JSON.parse(data);
+            if (res.statusCode >= 200 && res.statusCode < 300) {
+              resolve({ sent: true, messageId: parsed.messageId, code: res.statusCode });
+            } else {
+              reject(Object.assign(new Error(parsed.message || `Brevo ${res.statusCode}`), { statusCode: res.statusCode }));
+            }
+          } catch (e) {
+            reject(new Error(`Brevo ${res.statusCode}: ${data}`));
+          }
+        });
+      }
+    );
+    req.on("timeout", () => { req.destroy(); reject(new Error("Brevo API timeout")); });
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
 };
 
 // Build a transport for a specific port. Used so a failed primary
@@ -120,11 +174,15 @@ const makeTransport = (port) =>
 // attempts fail the caller still gets { sent: false }.
 const MAX_SEND_ATTEMPTS = 2;
 const RETRY_DELAY_MS = () => 1000;
-const TRANSIENT = /timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|ECONNABORTED|EPROTO/i;
+const TRANSIENT = /timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|ECONNABORTED|EPROTO|Brevo API timeout/i;
 const PORTS = [Number(process.env.SMTP_PORT) || 587, 465].filter((v, i, a) => a.indexOf(v) === i);
 
+// Prefer the Brevo REST API when an API key is present — it uses
+// HTTPS (port 443) and is not affected by the outbound SMTP block.
+// Otherwise fall back to SMTP (works locally where ports aren't
+// restricted).
 export const sendEmail = async ({ to, subject, html }) => {
-  if (!transporter) {
+  if (!isConfigured && !BREVO_API_KEY) {
     const reason = "SMTP not configured";
     console.error(`[Email:disabled] Would send to ${to} | Subject: ${subject}`);
     lastSend = { sent: false, to, subject, reason, at: new Date().toISOString() };
@@ -132,24 +190,20 @@ export const sendEmail = async ({ to, subject, html }) => {
   }
 
   let lastError = null;
-  for (const port of PORTS) {
-    const t = port === Number(process.env.SMTP_PORT || 587) ? transporter : makeTransport(port);
+
+  // Path 1: Brevo REST API over HTTPS (port 443)
+  if (BREVO_API_KEY) {
     for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
       try {
-        const info = await t.sendMail({
-          from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
-          to,
-          subject,
-          html,
-        });
-        console.log(`[Email:sent] port ${port} attempt ${attempt} To: ${to} | id=${info.messageId}`);
-        lastSend = { sent: true, port, to, subject, reason: null, at: new Date().toISOString() };
+        const info = await brevoRequest({ to, subject, html });
+        console.log(`[Email:brevo-api] attempt ${attempt} To: ${to} | mid=${info.messageId}`);
+        lastSend = { sent: true, port: 443, to, subject, reason: null, at: new Date().toISOString() };
         return { sent: true, messageId: info.messageId };
       } catch (err) {
         lastError = err;
         const transient = TRANSIENT.test(err.message || err.code || "");
         if (attempt < MAX_SEND_ATTEMPTS && transient) {
-          console.warn(`[Email:port ${port} retry ${attempt}/${MAX_SEND_ATTEMPTS}] ${err.code || ""} ${err.message}`);
+          console.warn(`[Email:brevo-api retry ${attempt}/${MAX_SEND_ATTEMPTS}] ${err.message}`);
           await new Promise((r) => setTimeout(r, RETRY_DELAY_MS()));
         } else {
           break;
@@ -157,9 +211,39 @@ export const sendEmail = async ({ to, subject, html }) => {
       }
     }
   }
-  console.error(`[Email] send FAILED after ports ${PORTS.join(",")} to ${to} | ${lastError?.code || ""} ${lastError?.message}`);
+
+  // Path 2: SMTP fallback (works where outbound SMTP is not blocked)
+  if (isConfigured) {
+    for (const port of PORTS) {
+      const t = port === Number(process.env.SMTP_PORT || 587) ? transporter : makeTransport(port);
+      for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
+        try {
+          const info = await t.sendMail({
+            from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
+            to,
+            subject,
+            html,
+          });
+          console.log(`[Email:smtp] port ${port} attempt ${attempt} To: ${to} | id=${info.messageId}`);
+          lastSend = { sent: true, port, to, subject, reason: null, at: new Date().toISOString() };
+          return { sent: true, messageId: info.messageId };
+        } catch (err) {
+          lastError = err;
+          const transient = TRANSIENT.test(err.message || err.code || "");
+          if (attempt < MAX_SEND_ATTEMPTS && transient) {
+            console.warn(`[Email:port ${port} retry ${attempt}/${MAX_SEND_ATTEMPTS}] ${err.code || ""} ${err.message}`);
+            await new Promise((r) => setTimeout(r, RETRY_DELAY_MS()));
+          } else {
+            break;
+          }
+        }
+      }
+    }
+  }
+
+  console.error(`[Email] send FAILED to ${to} | ${lastError?.message}`);
   const reason = `${lastError?.code || "ERROR"}: ${lastError?.message}`;
-  lastSend = { sent: false, port: PORTS[PORTS.length - 1], to, subject, reason, at: new Date().toISOString() };
+  lastSend = { sent: false, port: null, to, subject, reason, at: new Date().toISOString() };
   return { sent: false, reason };
 };
 
