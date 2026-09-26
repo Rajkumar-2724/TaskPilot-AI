@@ -17,6 +17,12 @@ export const protect = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Purpose-scoped tokens (e.g. the login OTP challenge) are signed with a
+    // different secret, but reject them explicitly too as defence in depth.
+    if (decoded.purpose) {
+      res.status(401);
+      throw new Error("Not authorized, this token is not a session token");
+    }
     const user = await User.findById(decoded.id);
     if (!user || !user.isActive) {
       res.status(401);

@@ -48,14 +48,18 @@ const deliverVerificationCode = async (user) => {
 };
 
 // --- Login OTP (second factor for every sign-in) ---
-// The challenge token is short-lived and purpose-scoped so it can never be
-// mistaken for a session token, even though it is signed with the same secret.
+// The challenge is signed with a secret derived from JWT_SECRET, so it can
+// never verify as a session token, and `protect` additionally rejects any
+// token carrying a `purpose` claim.
+const loginChallengeSecret = () =>
+  crypto.createHmac("sha256", process.env.JWT_SECRET).update("taskpilot:login-otp").digest("hex");
+
 const generateLoginChallenge = (userId) =>
-  jwt.sign({ id: userId, purpose: "otp-login" }, process.env.JWT_SECRET, { expiresIn: `${LOGIN_OTP_EXPIRY_MINUTES}m` });
+  jwt.sign({ id: userId, purpose: "otp-login" }, loginChallengeSecret(), { expiresIn: `${LOGIN_OTP_EXPIRY_MINUTES}m` });
 
 const readLoginChallenge = (token) => {
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    const payload = jwt.verify(token, loginChallengeSecret());
     return payload.purpose === "otp-login" ? payload : null;
   } catch {
     return null;
