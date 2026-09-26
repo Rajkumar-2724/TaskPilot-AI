@@ -257,6 +257,16 @@ export const login = asyncHandler(async (req, res) => {
     throw err;
   }
 
+  const isDemoAdmin = process.env.DEMO_ADMIN_EMAIL && user.email.toLowerCase() === process.env.DEMO_ADMIN_EMAIL.toLowerCase();
+  if (isDemoAdmin) {
+    return res.json({
+      success: true,
+      requiresOtp: false,
+      user: user.toSafeObject(),
+      token: generateToken(user._id),
+    });
+  }
+
   if (!requireLoginOtp()) {
     return res.json({
       success: true,

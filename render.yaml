@@ -53,6 +53,15 @@ services:
       # This is NOT the SMTP key (which starts with xsmtpsib-).
       - key: BREVO_API_KEY
         sync: false
+      # Demo/judge admin account. demoadmin@gmail.com logs in without
+      # OTP (bypass applies ONLY to this email). Set the password on
+      # the dashboard. The same data and admin access as the original.
+      - key: DEMO_ADMIN_EMAIL
+        sync: false
+      - key: DEMO_ADMIN_PASSWORD
+        sync: false
+      - key: ORIGINAL_ADMIN_EMAIL
+        sync: false
 
    # ML service (FastAPI + scikit-learn)
   - type: web
