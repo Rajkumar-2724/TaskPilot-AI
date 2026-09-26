@@ -12,14 +12,15 @@ let transporter = null;
 if (isConfigured) {
   transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT) || 587,
+    port: Number(process.env.SMTP_PORT) || 2525,
     secure: Number(process.env.SMTP_PORT) === 465,
+    requireTLS: true,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     connectionTimeout: 15000,
     greetingTimeout: 15000,
     socketTimeout: 30000,
   });
-  console.log(`[Email] SMTP configured for ${process.env.SMTP_HOST}:${Number(process.env.SMTP_PORT) || 587}`);
+  console.log(`[Email] SMTP configured for ${process.env.SMTP_HOST}:${process.env.SMTP_PORT || 2525}`);
 }
 
 export const isEmailConfigured = Boolean(isConfigured);
@@ -57,7 +58,7 @@ export const probeSmtpPorts = async () => {
   if (!host) return portProbe;
 
   const net = await import("net");
-  const ports = [587, 465, 25];
+  const ports = [2525, 465, 25];
   for (const port of ports) {
     let successes = 0;
     const samples = [];
@@ -94,7 +95,7 @@ export const emailStatus = () => {
   return {
     configured: isConfigured || !!BREVO_API_KEY,
     smtpHost: process.env.SMTP_HOST || null,
-    smtpPort: Number(process.env.SMTP_PORT) || 587,
+    smtpPort: Number(process.env.SMTP_PORT) || 2525,
     from: process.env.SMTP_FROM || null,
     brevoApiKeyPresent: !!BREVO_API_KEY,
     transport,
@@ -165,6 +166,7 @@ const makeTransport = (port) =>
     host: process.env.SMTP_HOST,
     port,
     secure: port === 465,
+    requireTLS: true,
     auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
     connectionTimeout: 15000,
     greetingTimeout: 15000,
@@ -176,7 +178,7 @@ const makeTransport = (port) =>
 const MAX_SEND_ATTEMPTS = 2;
 const RETRY_DELAY_MS = () => 1000;
 const TRANSIENT = /timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|ECONNABORTED|EPROTO|Brevo API timeout/i;
-const PORTS = [Number(process.env.SMTP_PORT) || 587, 465].filter((v, i, a) => a.indexOf(v) === i);
+const PORTS = [Number(process.env.SMTP_PORT) || 2525];
 
 // Prefer the Brevo REST API when an API key is present — it uses
 // HTTPS (port 443) and is not affected by the outbound SMTP block.
@@ -216,7 +218,7 @@ export const sendEmail = async ({ to, subject, html }) => {
   // Path 2: SMTP fallback (works where outbound SMTP is not blocked)
   if (isConfigured) {
     for (const port of PORTS) {
-      const t = port === Number(process.env.SMTP_PORT || 587) ? transporter : makeTransport(port);
+      const t = port === Number(process.env.SMTP_PORT) ? transporter : makeTransport(port);
       for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
         try {
           const info = await t.sendMail({
