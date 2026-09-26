@@ -107,10 +107,15 @@ export const emailStatus = () => {
   };
 };
 
-// --- Brevo REST API over HTTPS (port 443 — never blocked by Render's
-// free tier). Used as the primary path when BREVO_API_KEY is set.
-// Falls back to SMTP below if no API key is present.
-const BREVO_API_KEY = process.env.BREVO_API_KEY || null;
+// Use BREVO_API_KEY explicitly, or fall back to SMTP_PASS when
+// it is a Brevo key (starts with xsmtpsib-) so the REST API path
+// works immediately with the existing SMTP credentials.
+const BREVO_API_KEY =
+  process.env.BREVO_API_KEY ||
+  (process.env.SMTP_PASS && /^xsmtpsib-/test(process.env.SMTP_PASS)
+    ? process.env.SMTP_PASS
+    : null) ||
+  null;
 const BREVO_API_URL = "https://api.brevo.com/v3/sendEmail";
 
 const brevoRequest = async ({ to, subject, html }) => {
