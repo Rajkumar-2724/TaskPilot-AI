@@ -23,7 +23,7 @@ import { startReminderJob } from "./services/reminderService.js";
 import { startRetentionJob } from "./services/retentionService.js";
 import { initSettings } from "./services/settingsService.js";
 import { verifyEmailConfig, isEmailConfigured } from "./services/emailService.js";
-import { mlServiceAvailable, mlServiceUrl, warmUpMlService } from "./services/mlClient.js";
+import { mlServiceUrl, warmUpMlService, cachedMlServiceHealth, isCachedHealthStale } from "./services/mlClient.js";
 import { mlServiceUrlSource, usingDefaultMlUrl } from "./config/mlService.js";
 
 import authRoutes from "./routes/authRoutes.js";
@@ -106,8 +106,8 @@ const aiLimiter = rateLimit({
 });
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-app.get("/api/health", async (req, res) => {
-  const ml = await mlServiceAvailable();
+app.get("/api/health", (req, res) => {
+  const ml = cachedMlServiceHealth();
   res.json({
     success: true,
     message: "TaskPilot AI – Predictive Infrastructure Monitoring System",
@@ -119,6 +119,7 @@ app.get("/api/health", async (req, res) => {
       source: mlServiceUrlSource,
       ...(usingDefaultMlUrl ? { warning: "ML_SERVICE_URL is not set on this host; using the built-in default." } : {}),
       ...(ml.available ? {} : { error: ml.error }),
+      stale: isCachedHealthStale(),
     },
   });
 });

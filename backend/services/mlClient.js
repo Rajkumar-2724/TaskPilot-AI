@@ -8,20 +8,41 @@ import { ML_SERVICE_URL } from "../config/mlService.js";
 
 export const mlServiceUrl = () => ML_SERVICE_URL;
 
+const HEALTH_TTL_MS = 60_000;
+
+let cachedHealth = { available: false, data: null, error: "not checked yet", checkedAt: null };
+let inFlight = null;
+
 // Render free-tier cold starts can exceed 5s, so a healthy-but-waking service
-// must not be reported as "unreachable".
+// must not be reported as "unreachable". Concurrent callers share one request.
 export const mlServiceAvailable = async () => {
-  try {
-    const res = await axios.get(`${ML_SERVICE_URL}/api/health`, { timeout: 20000 });
-    return { available: true, data: res.data, error: null };
-  } catch (err) {
-    const error = err.code || err.message || "unknown error";
-    console.warn(`[ML Service] health check failed for ${ML_SERVICE_URL}: ${error}`);
-    return { available: false, data: null, error };
-  }
+  if (inFlight) return inFlight;
+
+  inFlight = (async () => {
+    try {
+      const res = await axios.get(`${ML_SERVICE_URL}/api/health`, { timeout: 20000 });
+      cachedHealth = { available: true, data: res.data, error: null, checkedAt: Date.now() };
+    } catch (err) {
+      const error = err.code || err.message || "unknown error";
+      console.warn(`[ML Service] health check failed for ${ML_SERVICE_URL}: ${error}`);
+      cachedHealth = { available: false, data: null, error, checkedAt: Date.now() };
+    } finally {
+      inFlight = null;
+    }
+    return cachedHealth;
+  })();
+
+  return inFlight;
 };
 
-// Best-effort warm-up so the first real user request doesn't hit a cold start.
+// Last known status, without waiting on the network. Used by /api/health so the
+// health endpoint stays fast even when the ML service is unreachable.
+export const cachedMlServiceHealth = () => cachedHealth;
+
+export const isCachedHealthStale = () => !cachedHealth.checkedAt || Date.now() - cachedHealth.checkedAt > HEALTH_TTL_MS;
+
+// Best-effort warm-up plus a periodic refresh, so the first real user request
+// doesn't hit a cold start and the cached status doesn't go stale.
 export const warmUpMlService = async () => {
   const health = await mlServiceAvailable();
   console.log(
@@ -29,6 +50,9 @@ export const warmUpMlService = async () => {
       ? `[ML Service] reachable at ${ML_SERVICE_URL}`
       : `[ML Service] NOT reachable at ${ML_SERVICE_URL} (${health.error}). Set ML_SERVICE_URL on the backend service.`
   );
+
+  const timer = setInterval(() => { mlServiceAvailable().catch(() => {}); }, HEALTH_TTL_MS);
+  timer.unref?.();
   return health;
 };
 
