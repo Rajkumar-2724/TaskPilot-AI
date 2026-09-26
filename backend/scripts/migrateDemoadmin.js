@@ -32,11 +32,17 @@ const run = async () => {
   let demoUser = await User.findOne({ email: DEMO_EMAIL });
   const isNew = !demoUser;
 
+const demoPassword = process.env.DEMO_ADMIN_PASSWORD;
+  if (!demoPassword) {
+    console.error("[Migrate] DEMO_ADMIN_PASSWORD is required. Set it on the dashboard.");
+    process.exit(1);
+  }
+
   if (isNew) {
     demoUser = new User({
       name: originalUser.name,
       email: DEMO_EMAIL,
-      password: process.env.DEMO_ADMIN_PASSWORD || "changeme123",
+      password: demoPassword,
       profilePicture: originalUser.profilePicture,
       role: "Admin",
       bio: originalUser.bio,
@@ -59,9 +65,7 @@ const run = async () => {
     demoUser.designation = originalUser.designation;
     demoUser.isActive = true;
     demoUser.isEmailVerified = true;
-    if (process.env.DEMO_ADMIN_PASSWORD) {
-      demoUser.password = process.env.DEMO_ADMIN_PASSWORD;
-    }
+    demoUser.password = demoPassword;
     await demoUser.save();
     console.log(`[Migrate] Updated existing demo user: ${DEMO_EMAIL} (ID: ${demoUser._id})`);
   }
