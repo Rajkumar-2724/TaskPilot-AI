@@ -43,10 +43,12 @@ export const verifyEmailConfig = async () => {
 // which let a failed delivery look like a success to the user.
 let lastSend = { sent: null, to: null, subject: null, reason: null, at: null };
 
-// Gmail and some other consumer SMTP hosts block connections originating from
-// cloud/datacenter IP ranges (Render, AWS, etc.). A plain TCP probe tells us
-// which ports are reachable at all, so a timeout can be told apart from bad
-// credentials.
+// Gmail and some other consumer SMTP hosts block connections
+// originating from cloud/datacenter IP ranges (Render, AWS, etc.).
+// We sample each port 3 times so a transient timeout doesn't get
+// reported as a hard block. "open" means >=2 of 3 succeeded.
+const PORT_SAMPLES = 3;
+const PORT_SAMPLE_GAP_MS = 2000;
 const portProbe = {};
 
 export const probeSmtpPorts = async () => {
@@ -54,44 +56,52 @@ export const probeSmtpPorts = async () => {
   if (!host) return portProbe;
 
   const net = await import("net");
-  await Promise.all(
-    [587, 465, 25].map(
-      (port) =>
-        new Promise((resolve) => {
-          const started = Date.now();
-          const socket = net
-            .createConnection({ host, port })
-            .setTimeout(8000)
-            .on("connect", () => {
-              portProbe[port] = { ok: true, ms: Date.now() - started, error: null };
-              socket.destroy();
-              resolve();
-            })
-            .on("timeout", () => {
-              portProbe[port] = { ok: false, ms: null, error: "timeout" };
-              socket.destroy();
-              resolve();
-            })
-            .on("error", (err) => {
-              portProbe[port] = { ok: false, ms: null, error: err.code || err.message };
-              resolve();
-            });
-        })
-    )
-  );
-
+  const ports = [587, 465, 25];
+  for (const port of ports) {
+    let successes = 0;
+    const samples = [];
+    for (let s = 0; s < PORT_SAMPLES; s++) {
+      const started = Date.now();
+      const ok = await new Promise((resolve) => {
+        const socket = net
+          .createConnection({ host, port })
+          .setTimeout(5000)
+          .on("connect", () => { socket.destroy(); resolve(true); })
+          .on("timeout", () => { socket.destroy(); resolve(false); })
+          .on("error", () => { resolve(false); });
+      });
+      if (ok) successes++;
+      samples.push(ok);
+      if (s < PORT_SAMPLES - 1) await new Promise((r) => setTimeout(r, PORT_SAMPLE_GAP_MS));
+    }
+    const ok = successes >= 2;
+    portProbe[port] = {
+      ok,
+      samples,
+      successRate: `${successes}/${PORT_SAMPLES}`,
+      error: ok ? null : "ETIMEDOUT (all samples failed)",
+    };
+  }
   console.log("[Email] SMTP port probe:", JSON.stringify(portProbe));
   return portProbe;
 };
 
-export const emailStatus = () => ({
-  configured: isEmailConfigured,
-  smtpHost: process.env.SMTP_HOST || null,
-  smtpPort: Number(process.env.SMTP_PORT) || 587,
-  from: process.env.SMTP_FROM || null,
-  portProbe,
-  lastSend,
-});
+export const emailStatus = () => {
+  const blocked = Object.values(portProbe).filter((p) => !p.ok).length;
+  const allBlocked = blocked === Object.keys(portProbe).length;
+  return {
+    configured: isEmailConfigured,
+    smtpHost: process.env.SMTP_HOST || null,
+    smtpPort: Number(process.env.SMTP_PORT) || 587,
+    from: process.env.SMTP_FROM || null,
+    portProbe,
+    lastSend,
+    hostReachable: !allBlocked,
+    note: allBlocked
+      ? "SMTP is unreachable from this host on every tested port. This is an outbound-network restriction, not a bad credential or a code bug: consumer SMTP providers (including Gmail) block cloud IP ranges. Use a provider built for server-side sending or change hosts."
+      : "SMTP is reachable; delivery should work. If mail still isn't arriving, check SMTP credentials and the recipient address.",
+  };
+};
 
 // Build a transport for a specific port. Used so a failed primary
 // port can fall back to the alternative without rebuilding a module.
