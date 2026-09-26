@@ -46,9 +46,11 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
-      # Brevo REST API key (starts with xkeysib-). When present, email
-      # uses HTTPS (port 443) instead of SMTP, bypassing outbound SMTP
-      # blocks on the Render free tier. Generate at brevo.com → Settings.
+      # Brevo HTTP API key (starts with xkeysib-). Required to send
+      # email via the REST API over HTTPS (port 443) — the ONLY way
+      # to send from Render free tier since it blocks all outbound SMTP.
+      # Generate at brevo.com → Settings → API Keys → Create.
+      # This is NOT the SMTP key (which starts with xsmtpsib-).
       - key: BREVO_API_KEY
         sync: false
 
