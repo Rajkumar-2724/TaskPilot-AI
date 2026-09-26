@@ -38,24 +38,56 @@ export const verifyEmailConfig = async () => {
   }
 };
 
+// Tracks the most recent send so failures are visible on /api/health instead of
+// only in logs. Several callers historically ignored the { sent: false } result,
+// which let a failed delivery look like a success to the user.
+let lastSend = { sent: null, to: null, subject: null, reason: null, at: null };
+
+export const emailStatus = () => ({
+  configured: isEmailConfigured,
+  smtpHost: process.env.SMTP_HOST || null,
+  from: process.env.SMTP_FROM || null,
+  lastSend,
+});
+
 export const sendEmail = async ({ to, subject, html }) => {
   if (!transporter) {
-    console.log(`[Email:disabled] Would send to ${to} | Subject: ${subject}`);
-    return { sent: false, reason: "SMTP not configured" };
+    const reason = "SMTP not configured";
+    console.error(`[Email:disabled] Would send to ${to} | Subject: ${subject}`);
+    lastSend = { sent: false, to, subject, reason, at: new Date().toISOString() };
+    return { sent: false, reason };
   }
   try {
-    await transporter.sendMail({
+    const info = await transporter.sendMail({
       from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
       to,
       subject,
       html,
     });
-    console.log(`[Email:sent] To: ${to} | Subject: ${subject}`);
-    return { sent: true };
+    console.log(`[Email:sent] To: ${to} | Subject: ${subject} | id=${info.messageId}`);
+    lastSend = { sent: true, to, subject, reason: null, at: new Date().toISOString() };
+    return { sent: true, messageId: info.messageId };
   } catch (err) {
-    console.error("[Email] send failed:", err.message);
+    console.error(`[Email] send FAILED to ${to} | ${err.code || ""} ${err.message}`);
+    lastSend = { sent: false, to, subject, reason: `${err.code || "ERROR"}: ${err.message}`, at: new Date().toISOString() };
     return { sent: false, reason: err.message };
   }
+};
+
+// For flows where the emailed code IS the login/verification credential: a
+// failed send must fail the request, never hand back a challenge that can
+// never be satisfied.
+export const sendEmailOrThrow = async (options) => {
+  const result = await sendEmail(options);
+  if (!result?.sent) {
+    const error = new Error(
+      `Could not send email to ${options.to}: ${result?.reason || "unknown SMTP error"}`
+    );
+    error.errorCode = "EMAIL_SEND_FAILED";
+    error.smtpReason = result?.reason || null;
+    throw error;
+  }
+  return result;
 };
 
 export const emailTemplates = {

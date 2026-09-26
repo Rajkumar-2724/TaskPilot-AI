@@ -3,7 +3,7 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { generateToken } from "../utils/generateToken.js";
-import { sendEmail, emailTemplates } from "../services/emailService.js";
+import { sendEmail, sendEmailOrThrow, emailTemplates } from "../services/emailService.js";
 import { cloudinaryEnabled } from "../config/cloudinary.js";
 import cloudinary from "../config/cloudinary.js";
 
@@ -40,7 +40,7 @@ const issueVerificationCode = async (user) => {
 
 const deliverVerificationCode = async (user) => {
   const code = await issueVerificationCode(user);
-  return sendEmail({
+  return sendEmailOrThrow({
     to: user.email,
     subject: "Verify your TaskPilot AI email address",
     html: emailTemplates.emailVerification(user.name, code, VERIFICATION_EXPIRY_MINUTES),
@@ -80,7 +80,7 @@ const deliverLoginOtp = async (user) => {
   user.otpAttempts = 0;
   await user.save();
 
-  await sendEmail({
+  await sendEmailOrThrow({
     to: user.email,
     subject: "Your TaskPilot AI login code",
     html: emailTemplates.loginOtp(user.name, otp, LOGIN_OTP_EXPIRY_MINUTES),
@@ -256,9 +256,11 @@ export const login = asyncHandler(async (req, res) => {
   try {
     challenge = await deliverLoginOtp(user);
   } catch (err) {
-    console.error("[Auth] Failed to send login OTP:", err.message);
+    console.error("[Auth] Failed to send login OTP:", err.smtpReason || err.message);
     res.status(503);
-    const e = new Error("Could not email your login code. Please try again in a moment.");
+    const e = new Error(
+      `Could not email your login code to ${user.email}. Email delivery failed: ${err.smtpReason || err.message}`
+    );
     e.errorCode = "OTP_EMAIL_FAILED";
     throw e;
   }

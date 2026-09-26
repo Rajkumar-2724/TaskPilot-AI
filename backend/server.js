@@ -22,7 +22,7 @@ import { detectEmergingRisks } from "./services/alertService.js";
 import { startReminderJob } from "./services/reminderService.js";
 import { startRetentionJob } from "./services/retentionService.js";
 import { initSettings } from "./services/settingsService.js";
-import { verifyEmailConfig, isEmailConfigured } from "./services/emailService.js";
+import { verifyEmailConfig, isEmailConfigured, emailStatus } from "./services/emailService.js";
 import { mlServiceUrl, warmUpMlService, cachedMlServiceHealth, isCachedHealthStale } from "./services/mlClient.js";
 import { mlServiceUrlSource, usingDefaultMlUrl } from "./config/mlService.js";
 
@@ -113,6 +113,7 @@ app.get("/api/health", (req, res) => {
     message: "TaskPilot AI – Predictive Infrastructure Monitoring System",
     time: new Date().toISOString(),
     emailConfigured: isEmailConfigured,
+    email: emailStatus(),
     mlService: {
       url: mlServiceUrl(),
       available: ml.available,
