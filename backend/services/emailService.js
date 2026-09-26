@@ -43,10 +43,53 @@ export const verifyEmailConfig = async () => {
 // which let a failed delivery look like a success to the user.
 let lastSend = { sent: null, to: null, subject: null, reason: null, at: null };
 
+// Gmail and some other consumer SMTP hosts block connections originating from
+// cloud/datacenter IP ranges (Render, AWS, etc.). A plain TCP probe tells us
+// which ports are reachable at all, so a timeout can be told apart from bad
+// credentials.
+const portProbe = {};
+
+export const probeSmtpPorts = async () => {
+  const host = process.env.SMTP_HOST;
+  if (!host) return portProbe;
+
+  const net = await import("net");
+  await Promise.all(
+    [587, 465, 25].map(
+      (port) =>
+        new Promise((resolve) => {
+          const started = Date.now();
+          const socket = net
+            .createConnection({ host, port })
+            .setTimeout(8000)
+            .on("connect", () => {
+              portProbe[port] = { ok: true, ms: Date.now() - started, error: null };
+              socket.destroy();
+              resolve();
+            })
+            .on("timeout", () => {
+              portProbe[port] = { ok: false, ms: null, error: "timeout" };
+              socket.destroy();
+              resolve();
+            })
+            .on("error", (err) => {
+              portProbe[port] = { ok: false, ms: null, error: err.code || err.message };
+              resolve();
+            });
+        })
+    )
+  );
+
+  console.log("[Email] SMTP port probe:", JSON.stringify(portProbe));
+  return portProbe;
+};
+
 export const emailStatus = () => ({
   configured: isEmailConfigured,
   smtpHost: process.env.SMTP_HOST || null,
+  smtpPort: Number(process.env.SMTP_PORT) || 587,
   from: process.env.SMTP_FROM || null,
+  portProbe,
   lastSend,
 });
 
