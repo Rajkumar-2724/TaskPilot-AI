@@ -93,11 +93,25 @@ export const emailStatus = () => ({
   lastSend,
 });
 
+// Build a transport for a specific port. Used so a failed primary
+// port can fall back to the alternative without rebuilding a module.
+const makeTransport = (port) =>
+  nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port,
+    secure: port === 465,
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 30000,
+  });
+
 // Retry on transient transport errors (timeout, reset, refusal). If all
 // attempts fail the caller still gets { sent: false }.
-const MAX_SEND_ATTEMPTS = 3;
-const RETRY_DELAY_MS = (attempt) => [0, 1000, 2500][attempt] ?? 3000;
+const MAX_SEND_ATTEMPTS = 2;
+const RETRY_DELAY_MS = () => 1000;
 const TRANSIENT = /timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|ECONNREFUSED|ECONNABORTED|EPROTO/i;
+const PORTS = [Number(process.env.SMTP_PORT) || 587, 465].filter((v, i, a) => a.indexOf(v) === i);
 
 export const sendEmail = async ({ to, subject, html }) => {
   if (!transporter) {
@@ -106,33 +120,36 @@ export const sendEmail = async ({ to, subject, html }) => {
     lastSend = { sent: false, to, subject, reason, at: new Date().toISOString() };
     return { sent: false, reason };
   }
+
   let lastError = null;
-  for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
-    try {
-      const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
-        to,
-        subject,
-        html,
-      });
-      console.log(`[Email:sent] attempt ${attempt} To: ${to} | Subject: ${subject} | id=${info.messageId}`);
-      lastSend = { sent: true, to, subject, reason: null, at: new Date().toISOString() };
-      return { sent: true, messageId: info.messageId };
-    } catch (err) {
-      lastError = err;
-      const transient = TRANSIENT.test(err.message || err.code || "");
-      if (attempt < MAX_SEND_ATTEMPTS && transient) {
-        const ms = RETRY_DELAY_MS(attempt);
-        console.warn(`[Email:retry ${attempt}/${MAX_SEND_ATTEMPTS}] ${err.code || ""} ${err.message} — waiting ${ms}ms`);
-        await new Promise((r) => setTimeout(r, ms));
-      } else {
-        break;
+  for (const port of PORTS) {
+    const t = port === Number(process.env.SMTP_PORT || 587) ? transporter : makeTransport(port);
+    for (let attempt = 1; attempt <= MAX_SEND_ATTEMPTS; attempt++) {
+      try {
+        const info = await t.sendMail({
+          from: process.env.SMTP_FROM || "TaskPilot AI <no-reply@taskpilot.ai>",
+          to,
+          subject,
+          html,
+        });
+        console.log(`[Email:sent] port ${port} attempt ${attempt} To: ${to} | id=${info.messageId}`);
+        lastSend = { sent: true, port, to, subject, reason: null, at: new Date().toISOString() };
+        return { sent: true, messageId: info.messageId };
+      } catch (err) {
+        lastError = err;
+        const transient = TRANSIENT.test(err.message || err.code || "");
+        if (attempt < MAX_SEND_ATTEMPTS && transient) {
+          console.warn(`[Email:port ${port} retry ${attempt}/${MAX_SEND_ATTEMPTS}] ${err.code || ""} ${err.message}`);
+          await new Promise((r) => setTimeout(r, RETRY_DELAY_MS()));
+        } else {
+          break;
+        }
       }
     }
   }
-  console.error(`[Email] send FAILED after ${MAX_SEND_ATTEMPTS} attempts to ${to} | ${lastError?.code || ""} ${lastError?.message}`);
+  console.error(`[Email] send FAILED after ports ${PORTS.join(",")} to ${to} | ${lastError?.code || ""} ${lastError?.message}`);
   const reason = `${lastError?.code || "ERROR"}: ${lastError?.message}`;
-  lastSend = { sent: false, to, subject, reason, at: new Date().toISOString() };
+  lastSend = { sent: false, port: PORTS[PORTS.length - 1], to, subject, reason, at: new Date().toISOString() };
   return { sent: false, reason };
 };
 
