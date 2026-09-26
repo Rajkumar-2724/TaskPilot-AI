@@ -56,7 +56,7 @@ const ModelEvaluation = () => {
     } catch (err) {
       if (err.response?.status === 503) {
         setMlAvailable(false);
-        toast.error("ML service is not running. Start it with: cd ml-service && python main.py");
+        toast.error("The ML service is unreachable from the backend. Set ML_SERVICE_URL on the backend host to the ML service URL.");
       } else {
         toast.error(err.response?.data?.message || "Retraining failed");
       }
@@ -151,7 +151,7 @@ const ModelEvaluation = () => {
       {!mlAvailable && (
         <div className="tp-box-subtle p-3 mb-4" style={{ border: "1px solid rgba(239,68,68,0.3)" }}>
           <strong className="text-danger"><i className="bi bi-exclamation-triangle me-1" /> ML service not reachable.</strong>
-          <span className="ms-2 small text-muted">Start it with cd ml-service && python main.py to train models and refresh the registry.</span>
+          <span className="ms-2 small text-muted">Requires the ML service to be reachable from the backend (ML_SERVICE_URL).</span>
         </div>
       )}
 

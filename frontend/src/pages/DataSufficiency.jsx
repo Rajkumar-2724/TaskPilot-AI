@@ -94,7 +94,7 @@ const DataSufficiency = () => {
     } catch (err) {
       if (err.response?.status === 503) {
         setMlAvailable(false);
-        toast.error("ML service is not running. Start it with: cd ml-service && python main.py");
+        toast.error("The ML service is unreachable from the backend. Set ML_SERVICE_URL on the backend host to the ML service URL.");
       } else {
         toast.error(err.response?.data?.message || "Analysis failed");
       }
@@ -116,7 +116,7 @@ const DataSufficiency = () => {
       toast.success("CUF data-sufficiency analysis completed");
       setData(data);
     } catch (err) {
-      if (err.response?.status === 503) { setMlAvailable(false); toast.error("ML service not running. cd ml-service && python main.py"); }
+      if (err.response?.status === 503) { setMlAvailable(false); toast.error("The ML service is unreachable from the backend. Set ML_SERVICE_URL on the backend host to the ML service URL."); }
       else { toast.error(err.response?.data?.message || "Training failed"); }
     } finally { setTraining(false); }
   };
@@ -199,7 +199,7 @@ const notRun = data?.status === "not_run";
       {!mlAvailable && (
         <div className="tp-box-subtle p-3 mb-4" style={{ border: "1px solid rgba(239,68,68,0.3)" }}>
           <strong className="text-danger"><i className="bi bi-exclamation-triangle me-1" /> ML service not reachable.</strong>
-          {isAdmin ? <span className="ms-2 small text-muted">It must be running for training (cd ml-service && python main.py). </span> : <span className="ms-2 small text-muted">Start the ML service, then an Admin can run the experiment.</span>}
+          {isAdmin ? <span className="ms-2 small text-muted">Requires the ML service to be reachable from the backend (ML_SERVICE_URL). </span> : <span className="ms-2 small text-muted">Once the ML service is reachable, an Admin can run the experiment.</span>}
         </div>
       )}
 

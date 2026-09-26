@@ -71,7 +71,7 @@ export const trainCufAnalysis = asyncHandler(async (req, res) => {
   const health = await mlServiceAvailable();
   if (!health.available) {
     res.status(503);
-    throw new Error("ML prediction service is not reachable. Start it with: cd ml-service && python main.py");
+    throw new Error("ML prediction service is unreachable from the backend. Check that ML_SERVICE_URL points to a running ML service.");
   }
 
   const result = await callMlCufTrain({});
@@ -191,7 +191,7 @@ export const runProjectCufAnalysis = asyncHandler(async (req, res) => {
   const health = await mlServiceAvailable();
   if (!health.available) {
     res.status(503);
-    throw new Error("ML prediction service is not reachable. Start it with: cd ml-service && python main.py");
+    throw new Error("ML prediction service is unreachable from the backend. Check that ML_SERVICE_URL points to a running ML service.");
   }
 
   const result = await callMlCufProjectAnalysis({ selectedProject, sector, state, projectType, costMin, costMax, durationMin, durationMax });

@@ -7,7 +7,7 @@ let mlServiceWarningLogged = false;
 const logMlServiceUnavailable = () => {
   if (!mlServiceWarningLogged) {
     mlServiceWarningLogged = true;
-    console.warn(`[ML Service] Prediction service not reachable at ${ML_SERVICE_URL}. Using built-in fallback engine. Start it with: cd ml-service && python main.py`);
+    console.warn(`[ML Service] Prediction service not reachable at ${ML_SERVICE_URL}. Using built-in fallback engine. Check that ML_SERVICE_URL is set to a running ML service.`);
   }
 };
 
