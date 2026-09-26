@@ -112,7 +112,7 @@ export const emailStatus = () => {
 // works immediately with the existing SMTP credentials.
 const BREVO_API_KEY =
   process.env.BREVO_API_KEY ||
-  (process.env.SMTP_PASS && /^xsmtpsib-/test(process.env.SMTP_PASS)
+  (process.env.SMTP_PASS && process.env.SMTP_PASS.startsWith("xsmtpsib-")
     ? process.env.SMTP_PASS
     : null) ||
   null;
