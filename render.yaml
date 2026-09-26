@@ -46,8 +46,13 @@ services:
         sync: false
       - key: SMTP_FROM
         sync: false
+      # Brevo REST API key (starts with xkeysib-). When present, email
+      # uses HTTPS (port 443) instead of SMTP, bypassing outbound SMTP
+      # blocks on the Render free tier. Generate at brevo.com → Settings.
+      - key: BREVO_API_KEY
+        sync: false
 
-  # ML service (FastAPI + scikit-learn)
+   # ML service (FastAPI + scikit-learn)
   - type: web
     name: taskpilot-ai-ml-service
     runtime: python
