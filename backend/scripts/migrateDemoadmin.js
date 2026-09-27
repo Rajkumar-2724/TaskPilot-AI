@@ -12,6 +12,7 @@ import Notification from "../models/Notification.js";
 import TaskHistory from "../models/TaskHistory.js";
 import Setting from "../models/Setting.js";
 import { RiskPrediction, RiskHistory, Alert, Recommendation, Simulation } from "../models/RiskModels.js";
+import bcrypt from "bcryptjs";
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ const demoPassword = process.env.DEMO_ADMIN_PASSWORD;
     process.exit(1);
   }
 
+  const hashedPassword = await bcrypt.hash(demoPassword, 10);
   if (isNew) {
     demoUser = new User({
       name: originalUser.name,
@@ -65,8 +67,7 @@ const demoPassword = process.env.DEMO_ADMIN_PASSWORD;
     demoUser.designation = originalUser.designation;
     demoUser.isActive = true;
     demoUser.isEmailVerified = true;
-    demoUser.password = demoPassword;
-    await demoUser.save();
+    await User.updateOne({ _id: demoUser._id }, { $set: { password: hashedPassword } });
     console.log(`[Migrate] Updated existing demo user: ${DEMO_EMAIL} (ID: ${demoUser._id})`);
   }
 
