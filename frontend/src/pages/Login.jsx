@@ -29,12 +29,16 @@ const Login = () => {
     return () => clearInterval(id);
   }, [challenge]);
 
-  const handleLogin = async (e) => {
+const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setOtpError("");
     try {
       const result = await login(form.email, form.password);
+      if (result && result._id) {
+        navigate("/app/dashboard");
+        return;
+      }
       setChallenge(result.challenge);
       setOtpEmail(result.email);
       setSecondsLeft(result.expiresInSeconds || 600);
@@ -51,7 +55,7 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
-  };
+};
 
   const handleVerifyOtp = async (e) => {
     e.preventDefault();
