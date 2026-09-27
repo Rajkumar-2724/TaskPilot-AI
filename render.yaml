@@ -54,14 +54,14 @@ services:
       - key: BREVO_API_KEY
         sync: false
       # Demo/judge admin account. demoadmin@gmail.com logs in without
-      # OTP (bypass applies ONLY to this email). Set the password on
-      # the dashboard. The same data and admin access as the original.
+      # OTP (bypass applies ONLY to this email). The same data and
+      # admin access as the original.
       - key: DEMO_ADMIN_EMAIL
-        sync: false
+        value: demoadmin@gmail.com
       - key: DEMO_ADMIN_PASSWORD
-        sync: false
+        value: demoad@123
       - key: ORIGINAL_ADMIN_EMAIL
-        sync: false
+        value: rkrajubhai726@gmail.com
 
    # ML service (FastAPI + scikit-learn)
   - type: web
